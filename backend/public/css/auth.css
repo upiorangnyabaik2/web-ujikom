@@ -1,0 +1,207 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap');
+
+:root {
+  --primary: #2C2C2C;
+  --primary-dark: #1a1a1a;
+  --secondary: #555555;
+  --accent: #333333;
+  --light-bg: #f5f5f5;
+  --border-color: #d0d0d0;
+  --text-dark: #1A1A1A;
+  --text-light: #666666;
+  --shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #2C2C2C 0%, #555555 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.auth-container {
+  display: flex;
+  width: 100%;
+  max-width: 900px;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+}
+
+.auth-left {
+  flex: 1;
+  background: linear-gradient(135deg, #2C2C2C 0%, #1a1a1a 100%);
+  color: white;
+  padding: 60px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.auth-left h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 48px;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.auth-left p {
+  font-size: 16px;
+  opacity: 0.95;
+  line-height: 1.6;
+}
+
+.auth-right {
+  flex: 1;
+  padding: 60px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.card {
+  width: 100%;
+}
+
+h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  margin: 0 0 30px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text-dark);
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text-dark);
+  font-size: 14px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"] {
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 5px;
+  border-radius: 8px;
+  border: 2px solid var(--border-color);
+  font-size: 14px;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="tel"]:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+  background: #FAFAFA;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55100 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 25px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.switch {
+  margin-top: 24px;
+  font-size: 14px;
+  text-align: center;
+  color: var(--text-light);
+}
+
+.switch a {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.switch a:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+/* =====================
+   RESPONSIVE
+===================== */
+
+@media (max-width: 768px) {
+  body {
+    padding: 15px;
+  }
+  
+  .auth-container {
+    flex-direction: column;
+    max-width: 100%;
+  }
+  
+  .auth-left {
+    padding: 40px 30px;
+    min-height: auto;
+  }
+  
+  .auth-left h1 {
+    font-size: 36px;
+    margin-bottom: 15px;
+  }
+  
+  .auth-right {
+    padding: 40px 30px;
+  }
+  
+  h2 {
+    font-size: 24px;
+  }
+  
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"] {
+    padding: 12px 14px;
+    font-size: 16px;
+  }
+}

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FoodOnline - Pesan Makanan Lezat</title>
+  <link rel="stylesheet" href="/css/global.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <button id="nav-home" class="nav-link">🏠 Beranda</button>
+      <button id="nav-menu" class="nav-link">🍽️ Menu</button>
+      <button id="nav-orders" class="nav-link">📦 Pesanan</button>
+    </div>
+
+    <div class="header-right">
+      <button id="btn-cart" class="icon-btn" title="Cart">
+        <i class="fa-solid fa-bag-shopping"></i>
+        <span id="badge" class="badge">0</span>
+      </button>
+
+      <button id="btn-open-auth" class="icon-btn" title="Profile">
+        <i class="fa-regular fa-user"></i>
+      </button>
+
+      <img src="/img/logo.png" alt="logo" class="mini-hero" />
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main>
+
+    <!-- HOME PAGE -->
+    <section id="page-home" class="page active container">
+      <div class="hero">
+        <div class="hero-left">
+          <h1>Makanan Lezat,<br>Terkirim Cepat</h1>
+          <p class="sub">Pesan sekarang — segar & nikmat.</p>
+          <button id="cta-menu" class="btn-primary">Lihat Menu</button>
+        </div>
+
+        <div class="hero-right">
+          <img src="/img/bg1.jpg" alt="hero" class="hero-image" />
+        </div>
+      </div>
+
+      <h2 class="section-title">Rekomendasi</h2>
+
+      <div class="slider-container">
+        <button id="slide-left" class="slide-btn">&lsaquo;</button>
+        <div id="slider" class="slider" aria-live="polite"></div>
+        <button id="slide-right" class="slide-btn">&rsaquo;</button>
+      </div>
+    </section>
+
+
+    <!-- MENU PAGE -->
+    <section id="page-menu" class="page container">
+
+      <h2 class="section-title">Menu</h2>
+
+      <!-- ADMIN PANEL (Hidden by default, shown only for admin) -->
+      <div id="admin-menu-panel" style="display:none; margin-bottom:24px; background:#fff; padding:20px; border-radius:var(--radius-lg); border:1px solid var(--border-color); box-shadow:var(--shadow-md);">
+        <h3 style="margin-bottom:12px; color:var(--text-dark); font-weight:700;">Admin - Kelola Menu</h3>
+
+        <div class="admin-form" style="display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap;">
+          <input id="admin-name" type="text" placeholder="Nama menu" style="flex:1; min-width:180px; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius); font-family:'Poppins',sans-serif;" />
+          <input id="admin-price" type="number" placeholder="Harga" style="width:130px; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius); font-family:'Poppins',sans-serif;" />
+          <input id="admin-image" type="text" placeholder="Image URL" style="flex:1; min-width:220px; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius); font-family:'Poppins',sans-serif;" />
+          <input id="admin-desc" type="text" placeholder="Deskripsi (opsional)" style="flex:2; min-width:220px; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius); font-family:'Poppins',sans-serif;" />
+          <button id="admin-add-btn" class="btn-primary" style="height:40px; margin-top:0;">Tambah Menu</button>
+        </div>
+      </div>
+
+      <!-- MENU GRID -->
+      <div id="grid" class="menu-grid"></div>
+
+    </section>
+
+
+    <!-- ORDERS PAGE -->
+    <section id="page-orders" class="page container">
+      <h2 class="section-title">Pesanan Saya</h2>
+      <div id="orders-list">Silakan login untuk melihat pesanan.</div>
+    </section>
+
+
+    <!-- PROFILE PAGE -->
+    <section id="page-profile" class="page container">
+      <h2 class="section-title">Akun Saya</h2>
+
+      <div id="profile-area" style="text-align:center; padding:40px; background:var(--light-bg); border-radius:var(--radius-lg); border:1px solid var(--border-color);">
+        <p style="font-size:16px; color:var(--text-light); margin-bottom:16px;">Anda belum login. Masuk ke akun Anda untuk melihat profil dan pesanan.</p>
+        <a href="/login.html" class="btn-primary" style="display:inline-block;">Login Sekarang</a>
+      </div>
+
+      <div id="profile-card" class="profile-card" style="display:none; max-width:500px; margin:40px auto;">
+        <div style="position:relative; margin-bottom:20px;">
+          <img id="profile-pic" src="/img/profile.jpg" class="profile-pic" alt="profile" style="box-shadow:0 8px 24px rgba(255,107,53,0.3); border:4px solid var(--primary);">
+        </div>
+        <h3 id="profile-name" style="font-family:'Playfair Display',serif; font-size:24px; margin-bottom:8px;"></h3>
+        <p id="profile-email" style="color:var(--text-light); margin-bottom:24px; font-size:14px;"></p>
+        <div style="display:flex; gap:12px;">
+          <button id="btn-logout" class="btn-primary" style="flex:1;">Logout</button>
+          <button onclick="showPage('orders')" class="btn-secondary" style="flex:1; padding:12px 28px;">Pesanan Saya</button>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- CART PAGE -->
+    <section id="page-cart" class="page container">
+      <h2 class="section-title">Keranjang</h2>
+
+      <div id="cart-items" class="cart-list"></div>
+
+      <div class="cart-actions">
+        <div class="cart-total">Total: <span id="cart-total">Rp 0</span></div>
+        <button id="checkout" class="btn-primary">Checkout</button>
+      </div>
+    </section>
+
+  </main>
+
+
+  <!-- DETAIL MODAL -->
+  <div id="detail-modal" class="modal" aria-hidden="true">
+    <div class="modal-inner">
+      <button id="close-detail" class="icon-btn">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <img id="detail-img" class="detail-img" src="" alt="">
+      <h3 id="detail-name"></h3>
+      <p id="detail-desc"></p>
+      <p id="detail-price"></p>
+      <button id="add-detail" class="btn-primary">Tambah ke Keranjang</button>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+
+</html>
