@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>FoodOnline - Pesan Makanan Lezat</title>
+  <title>Healthy Food - Pesan Makanan Lezat</title>
   <link rel="stylesheet" href="/css/global.css" />
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -15,9 +15,9 @@
   <!-- HEADER -->
   <header class="header">
     <div class="header-left">
-      <button id="nav-home" class="nav-link">🏠 Beranda</button>
-      <button id="nav-menu" class="nav-link">🍽️ Menu</button>
-      <button id="nav-orders" class="nav-link">📦 Pesanan</button>
+      <button id="nav-home" class="nav-link">Beranda</button>
+      <button id="nav-menu" class="nav-link">Menu</button>
+      <button id="nav-orders" class="nav-link">Pesanan</button>
     </div>
 
     <div class="header-right">
@@ -143,6 +143,55 @@
       <p id="detail-desc"></p>
       <p id="detail-price"></p>
       <button id="add-detail" class="btn-primary">Tambah ke Keranjang</button>
+    </div>
+  </div>
+
+  <!-- ORDER DETAIL MODAL -->
+  <div id="order-detail-modal" class="modal" aria-hidden="true">
+    <div class="modal-inner order-detail-modal-inner">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--border-color);">
+        <h2 style="margin:0; color:var(--text-dark); font-size:22px;">Detail Pesanan</h2>
+        <button id="close-order-detail" class="icon-btn" style="width:32px; height:32px;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      
+      <div class="order-detail-info">
+        <div class="info-row">
+          <span class="info-label">Order ID:</span>
+          <span id="order-id" class="info-value"></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Tanggal:</span>
+          <span id="order-date" class="info-value"></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Status:</span>
+          <div>
+            <span id="order-status-badge" class="status-badge"></span>
+            <select id="order-status" class="status-select" style="display:none;">
+              <option value="pending">Pending</option>
+              <option value="processing">Processing</option>
+              <option value="ready">Ready</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin:24px 0 16px 0; font-size:16px; color:var(--text-dark); font-weight:600;">Item Pesanan</h3>
+      <div id="order-items" class="order-items-list"></div>
+
+      <div class="order-detail-total">
+        <span>Total:</span>
+        <span id="order-total" style="color:var(--primary);"></span>
+      </div>
+
+      <div class="order-detail-actions">
+        <button id="btn-close-order-detail" class="btn-primary">Tutup</button>
+        <button id="btn-save-status" class="btn-primary" style="display:none;">Simpan Status</button>
+      </div>
     </div>
   </div>
 

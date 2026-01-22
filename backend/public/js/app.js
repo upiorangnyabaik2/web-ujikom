@@ -58,12 +58,8 @@ function persist() {
   updateCartUI();
 }
 function showToast(msg) {
-  // keep simple; you can replace with nicer toast UI later
-  // prefer non-blocking, but fallback to alert if not available
   if (window.toastr) return toastr.info(msg);
   console.log("TOAST:", msg);
-  // small visual: non-blocking DOM toast could be added; for now alert is noisy so use console+optional alert:
-  // alert(msg);
 }
 function getUser() {
   try { return JSON.parse(localStorage.getItem("user") || "null"); } catch(e){ return null; }
@@ -173,28 +169,32 @@ function updateCartUI(){
   if (!cartItemsEl) return;
   cartItemsEl.innerHTML = "";
   if (CART.length === 0) {
-    cartItemsEl.innerHTML = "<p>Your cart is empty</p>";
+    cartItemsEl.innerHTML = "<div style='text-align:center; padding:40px; color:var(--text-light);'><i class='fa-solid fa-cart-shopping' style='font-size:48px; margin-bottom:16px; display:block; opacity:0.5;'></i>Keranjang Anda kosong</div>";
     return;
   }
   CART.forEach(it=>{
     const row = document.createElement("div");
-    row.className = "cart-row";
+    row.className = "cart-item";
     row.innerHTML = `
-      <img src="${it.image}" alt="${it.name}" />
-      <div style="flex:1">
-        <h4 style="margin:0">${it.name}</h4>
-        <div style="color:#555">${formatRp(it.price)}</div>
+      <img src="${it.image}" alt="${it.name}" class="cart-item-img" />
+      <div class="cart-item-info">
+        <h4 class="cart-item-name">${it.name}</h4>
+        <p class="cart-item-price">${formatRp(it.price)}</p>
       </div>
-      <div>
-        <button class="dec" data-id="${it._id}">-</button>
-        <span style="margin:0 0px">${it.qty}</span>
-        <button class="inc" data-id="${it._id}">+</button>
+      <div class="cart-item-qty">
+        <button class="qty-btn dec" data-id="${it._id}" title="Kurangi">−</button>
+        <span>${it.qty}</span>
+        <button class="qty-btn inc" data-id="${it._id}" title="Tambah">+</button>
       </div>
+      <button class="cart-item-remove" data-id="${it._id}" title="Hapus dari keranjang">
+        <i class="fa-solid fa-trash"></i>
+      </button>
     `;
     cartItemsEl.appendChild(row);
   });
   cartItemsEl.querySelectorAll(".dec").forEach(b=> b.addEventListener("click", ()=> changeQty(b.dataset.id,-1)));
   cartItemsEl.querySelectorAll(".inc").forEach(b=> b.addEventListener("click", ()=> changeQty(b.dataset.id,1)));
+  cartItemsEl.querySelectorAll(".cart-item-remove").forEach(b=> b.addEventListener("click", ()=> changeQty(b.dataset.id,-999)));
 }
 
 /* ========== RENDER MENU ========== */
@@ -439,17 +439,140 @@ async function loadOrders(){
     if (!arr || arr.length === 0) { if (ordersList) ordersList.innerHTML = "<p>Tidak ada pesanan.</p>"; return; }
     if (ordersList) ordersList.innerHTML = "";
     arr.forEach(o=>{
-      const el = document.createElement("div"); el.className = "card"; el.style.marginBottom = "12px";
+      const el = document.createElement("div");
+      el.className = "order-card";
+      el.style.cursor = "pointer";
+      const statusColors = {
+        pending: "#FFA726",
+        processing: "#42A5F5",
+        ready: "#AB47BC",
+        completed: "#66BB6A",
+        cancelled: "#EF5350"
+      };
+      const statusColor = statusColors[o.status] || "#999";
       el.innerHTML = 
-        `<h4>Order #${o._id}</h4>
-        <p>Status: ${o.status}</p>
-        <p>Total: ${formatRp(o.total)}</p>
-        <div>${ o.items.map(it => `<div>${it.qty} × ${it.name} — ${formatRp(it.price)}</div>`).join("") }</div>
-        <small style="color:#666">Tanggal: ${new Date(o.createdAt).toLocaleString()}</small>`;
+        `<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px;">
+          <div style="flex:1;">
+            <h4 style="margin:0 0 8px 0; font-size:16px;">Order #${o._id}</h4>
+            <p style="margin:0 0 6px 0; color:var(--text-light); font-size:13px;">Tanggal: ${new Date(o.createdAt).toLocaleString()}</p>
+            <p style="margin:0; color:var(--text-light); font-size:13px;">${o.items.length} item</p>
+          </div>
+          <div style="text-align:right;">
+            <div style="background:${statusColor}; color:white; padding:6px 12px; border-radius:var(--radius); font-size:12px; font-weight:600; margin-bottom:8px;">${o.status}</div>
+            <p style="margin:0; font-weight:700; color:var(--primary);">${formatRp(o.total)}</p>
+          </div>
+        </div>`;
+      el.addEventListener("click", ()=> showOrderDetail(o));
       ordersList.appendChild(el);
     });
   }catch(e){ console.error(e); if (ordersList) ordersList.innerHTML = "Gagal memuat pesanan."; }
 }
+
+/* ========== ORDER DETAIL MODAL ========== */
+const orderDetailModal = document.getElementById("order-detail-modal");
+const orderStatusSelect = document.getElementById("order-status");
+const orderStatusBadge = document.getElementById("order-status-badge");
+const btnSaveStatus = document.getElementById("btn-save-status");
+let currentOrderData = null;
+
+const statusColors = {
+  pending: "#FFA726",
+  processing: "#42A5F5",
+  ready: "#AB47BC",
+  completed: "#66BB6A",
+  cancelled: "#EF5350"
+};
+
+const statusLabels = {
+  pending: "Pending",
+  processing: "Processing",
+  ready: "Ready",
+  completed: "Completed",
+  cancelled: "Cancelled"
+};
+
+function showOrderDetail(orderData){
+  currentOrderData = orderData;
+  const user = getUser();
+  const isAdmin = user && user.role === "admin";
+  
+  document.getElementById("order-id").innerText = orderData._id;
+  document.getElementById("order-date").innerText = new Date(orderData.createdAt).toLocaleString();
+  
+  // Show status badge dan select sesuai role
+  const statusColor = statusColors[orderData.status] || "#999";
+  const statusLabel = statusLabels[orderData.status] || orderData.status;
+  orderStatusBadge.innerText = statusLabel;
+  orderStatusBadge.style.backgroundColor = statusColor;
+  orderStatusSelect.value = orderData.status;
+  
+  // Hanya admin yang bisa mengubah status
+  if (isAdmin) {
+    orderStatusBadge.style.display = "none";
+    orderStatusSelect.style.display = "inline-block";
+    btnSaveStatus.style.display = "block";
+  } else {
+    orderStatusBadge.style.display = "inline-block";
+    orderStatusSelect.style.display = "none";
+    btnSaveStatus.style.display = "none";
+  }
+  
+  document.getElementById("order-total").innerText = formatRp(orderData.total);
+  
+  const itemsDiv = document.getElementById("order-items");
+  itemsDiv.innerHTML = "";
+  orderData.items.forEach(it=>{
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <div>
+        <p style="margin:0; font-weight:600; color:var(--text-dark);">${it.name}</p>
+        <p style="margin:0; color:var(--text-light); font-size:13px;">Qty: ${it.qty}</p>
+      </div>
+      <p style="margin:0; font-weight:600; color:var(--primary);">${formatRp(it.price * it.qty)}</p>
+    `;
+    itemsDiv.appendChild(div);
+  });
+  
+  if (orderDetailModal) orderDetailModal.classList.add("open");
+}
+
+function closeOrderDetail(){
+  if (orderDetailModal) orderDetailModal.classList.remove("open");
+  currentOrderData = null;
+}
+
+async function updateOrderStatus(){
+  if (!currentOrderData || !token) return showToast("Error: Order data missing");
+  const user = getUser();
+  if (!user || user.role !== "admin") return showToast("Hanya admin yang bisa mengubah status");
+  
+  const newStatus = orderStatusSelect.value;
+  
+  try {
+    const res = await fetch(`${API_ORDER}/${currentOrderData._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ status: newStatus })
+    });
+    const j = await res.json();
+    if (!res.ok) return showToast(j.msg || "Gagal update status");
+    showToast("Status pesanan diperbarui");
+    currentOrderData.status = newStatus;
+    closeOrderDetail();
+    await loadOrders();
+  } catch (err) {
+    console.error(err);
+    showToast("Gagal update status");
+  }
+}
+
+// Event listeners untuk order detail modal
+document.getElementById("close-order-detail")?.addEventListener("click", closeOrderDetail);
+document.getElementById("btn-close-order-detail")?.addEventListener("click", closeOrderDetail);
+document.getElementById("btn-save-status")?.addEventListener("click", updateOrderStatus);
 
 /* ========== ADMIN UI & CRUD ========== */
 function updateAdminUI(){
