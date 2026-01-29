@@ -133,12 +133,16 @@ x<!DOCTYPE html>
             background: var(--danger);
             color: white;
             border: none;
-            padding: 10px 16px;
+            padding: 12px 24px;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
             transition: all 0.3s;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .logout-btn:hover {
@@ -260,7 +264,7 @@ x<!DOCTYPE html>
         }
 
         .btn {
-            padding: 12px 20px;
+            padding: 12px 24px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -268,6 +272,11 @@ x<!DOCTYPE html>
             font-weight: 600;
             transition: all 0.3s;
             font-family: 'Poppins', sans-serif;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
         }
 
         .btn-primary {
@@ -335,13 +344,17 @@ x<!DOCTYPE html>
 
         .menu-card-actions button {
             flex: 1;
-            padding: 8px;
+            padding: 10px 12px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
             transition: all 0.3s;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-edit {
@@ -495,6 +508,42 @@ x<!DOCTYPE html>
     </style>
 </head>
 <body>
+    <!-- Edit Menu Modal -->
+    <div id="editMenuModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <h3 style="font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 20px; color: var(--text-dark);">Edit Menu Item</h3>
+            <form id="editMenuForm" onsubmit="handleEditMenu(event)">
+                <input type="hidden" id="editMenuId">
+                
+                <div class="form-group">
+                    <label>Menu Name</label>
+                    <input type="text" id="editMenuName" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Price (Rp)</label>
+                    <input type="number" id="editMenuPrice" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="editMenuDescription"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Change Image (optional)</label>
+                    <input type="file" id="editMenuImage" accept="image/*">
+                    <small style="color: var(--text-light); display: block; margin-top: 5px;">Leave empty to keep current image</small>
+                </div>
+
+                <div class="btn-group" style="margin-top: 20px; display: flex; gap: 12px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Update Menu Item</button>
+                    <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeEditModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="admin-container">
         <!-- Sidebar -->
         <div class="admin-sidebar">
@@ -516,12 +565,6 @@ x<!DOCTYPE html>
                     <a href="#" onclick="switchTab('orders', event)" class="nav-link" data-tab="orders">
                         <i class="fas fa-shopping-cart"></i>
                         <span>Orders</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" onclick="switchTab('categories', event)" class="nav-link" data-tab="categories">
-                        <i class="fas fa-folder"></i>
-                        <span>Categories</span>
                     </a>
                 </li>
                 <li style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; margin-top: 15px;">
@@ -583,21 +626,8 @@ x<!DOCTYPE html>
                                 <input type="text" id="menuName" placeholder="e.g. Nasi Goreng" required>
                             </div>
                             <div class="form-group">
-                                <label>Category</label>
-                                <select id="menuCategory" required>
-                                    <option value="">Select Category</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
                                 <label>Price (Rp)</label>
-                                <input type="number" id="menuPrice" placeholder="15000" min="0" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Image URL</label>
-                                <input type="text" id="menuImage" placeholder="https://...">
+                                <input type="number" id="menuPrice" placeholder="15000" min="1" required>
                             </div>
                         </div>
 
@@ -606,8 +636,13 @@ x<!DOCTYPE html>
                             <textarea id="menuDescription" placeholder="Menu description..."></textarea>
                         </div>
 
+                        <div class="form-group">
+                            <label>Image File</label>
+                            <input type="file" id="menuImage" accept="image/*" required>
+                        </div>
+
                         <div class="btn-group">
-                            <button type="submit" class="btn btn-primary">Add Menu Item</button>
+                            <button type="submit" class="btn btn-primary" id="submitMenuBtn">Add Menu Item</button>
                             <button type="reset" class="btn btn-secondary">Clear</button>
                         </div>
                     </form>
@@ -632,36 +667,6 @@ x<!DOCTYPE html>
                         <div class="loading">
                             <div class="spinner"></div>
                             Loading orders...
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Categories Section -->
-            <section id="categories-section" class="section">
-                <div id="alertCat" class="alert"></div>
-
-                <div class="admin-section">
-                    <h2>Add New Category</h2>
-                    <form id="addCategoryForm" onsubmit="handleAddCategory(event)">
-                        <div class="form-group">
-                            <label>Category Name</label>
-                            <input type="text" id="categoryName" placeholder="e.g. Makanan" required>
-                        </div>
-
-                        <div class="btn-group">
-                            <button type="submit" class="btn btn-primary">Add Category</button>
-                            <button type="reset" class="btn btn-secondary">Clear</button>
-                        </div>
-                    </form>
-                </div>
-
-                <div class="admin-section">
-                    <h2>All Categories</h2>
-                    <div id="categoriesList">
-                        <div class="loading">
-                            <div class="spinner"></div>
-                            Loading categories...
                         </div>
                     </div>
                 </div>
@@ -692,7 +697,6 @@ x<!DOCTYPE html>
 
             // Load dashboard data
             loadDashboard();
-            loadCategories();
         });
 
         function switchTab(tabName, event) {
@@ -721,12 +725,13 @@ x<!DOCTYPE html>
                 });
                 const data = await response.json();
 
-                if (data.success && data.orders) {
-                    const orders = data.orders;
+                // Handle response format: data.data or data.orders
+                const orders = data.data || data.orders || [];
+                if (data.success && orders.length > 0) {
                     const stats = {
                         total: orders.length,
-                        pending: orders.filter(o => o.status === "Pending").length,
-                        completed: orders.filter(o => o.status === "Completed").length,
+                        pending: orders.filter(o => o.status.toLowerCase() === "pending").length,
+                        completed: orders.filter(o => o.status.toLowerCase() === "completed").length,
                         revenue: orders.reduce((sum, o) => sum + (o.total || 0), 0)
                     };
 
@@ -783,26 +788,30 @@ x<!DOCTYPE html>
 
         async function loadMenuItems() {
             try {
-                const response = await fetch("/api/product", {
+                const response = await fetch("/api/menu", {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const data = await response.json();
 
-                if (data.products) {
-                    document.getElementById("menuList").innerHTML = data.products.map(product => `
+                if (data.success && data.data) {
+                    document.getElementById("menuList").innerHTML = data.data.map(product => `
                         <div class="menu-card">
                             <img src="${product.image || '/img/placeholder.png'}" alt="${product.name}" class="menu-card-image">
                             <div class="menu-card-name">${product.name}</div>
                             <div class="menu-card-price">Rp ${formatCurrency(product.price)}</div>
+                            <small style="color: var(--text-light); margin-bottom: 10px; display: block;">${product.description || 'No description'}</small>
                             <div class="menu-card-actions">
-                                <button onclick="editMenu('${product._id}')" class="btn-edit">Edit</button>
+                                <button onclick="openEditModal('${product._id}')" class="btn-edit">Edit</button>
                                 <button onclick="deleteMenu('${product._id}')" class="btn-delete">Delete</button>
                             </div>
                         </div>
                     `).join('');
+                } else {
+                    document.getElementById("menuList").innerHTML = '<p style="text-align: center; color: var(--text-light);">No menu items found</p>';
                 }
             } catch (error) {
                 console.error("Error loading menu items:", error);
+                document.getElementById("menuList").innerHTML = '<p style="color: red;">Error loading menu items</p>';
             }
         }
 
@@ -813,7 +822,9 @@ x<!DOCTYPE html>
                 });
                 const data = await response.json();
 
-                if (data.success && data.orders) {
+                // Handle response format: data.data or data.orders
+                const orders = data.data || data.orders || [];
+                if (data.success && orders.length > 0) {
                     document.getElementById("ordersList").innerHTML = `
                         <table class="orders-table">
                             <thead>
@@ -828,7 +839,7 @@ x<!DOCTYPE html>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${data.orders.map(order => `
+                                ${orders.map(order => `
                                     <tr>
                                         <td>${order._id.substring(0, 8)}...</td>
                                         <td>${order.recipientName}</td>
@@ -881,30 +892,31 @@ x<!DOCTYPE html>
             event.preventDefault();
             
             const name = document.getElementById("menuName").value;
-            const category = document.getElementById("menuCategory").value;
             const price = document.getElementById("menuPrice").value;
-            const image = document.getElementById("menuImage").value;
             const description = document.getElementById("menuDescription").value;
+            const imageFile = document.getElementById("menuImage").files[0];
 
-            if (!category) {
-                showAlert("Silahkan pilih kategori", "error");
+            if (!imageFile) {
+                showAlert("Pilih gambar menu", "error");
                 return;
             }
 
+            const formData = new FormData();
+            formData.append("name", name);
+            formData.append("price", price);
+            formData.append("description", description);
+            formData.append("image", imageFile);
+
             try {
-                const response = await fetch("/api/product", {
+                document.getElementById("submitMenuBtn").disabled = true;
+                document.getElementById("submitMenuBtn").textContent = "Adding...";
+
+                const response = await fetch("/api/menu", {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json",
                         Authorization: `Bearer ${token}`
                     },
-                    body: JSON.stringify({
-                        name,
-                        category,
-                        price: parseInt(price),
-                        image,
-                        description
-                    })
+                    body: formData
                 });
 
                 const data = await response.json();
@@ -914,7 +926,78 @@ x<!DOCTYPE html>
                     document.getElementById("addMenuForm").reset();
                     loadMenuItems();
                 } else {
-                    showAlert(data.message || "Gagal menambahkan menu item", "error");
+                    showAlert(data.msg || "Gagal menambahkan menu item", "error");
+                }
+            } catch (error) {
+                showAlert("Error: " + error.message, "error");
+            } finally {
+                document.getElementById("submitMenuBtn").disabled = false;
+                document.getElementById("submitMenuBtn").textContent = "Add Menu Item";
+            }
+        }
+
+        async function openEditModal(menuId) {
+            try {
+                const response = await fetch(`/api/menu/${menuId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await response.json();
+
+                if (data.success && data.data) {
+                    const menu = data.data;
+                    document.getElementById("editMenuId").value = menu._id;
+                    document.getElementById("editMenuName").value = menu.name;
+                    document.getElementById("editMenuPrice").value = menu.price;
+                    document.getElementById("editMenuDescription").value = menu.description || '';
+                    
+                    document.getElementById("editMenuModal").style.display = "flex";
+                } else {
+                    showAlert("Failed to load menu item", "error");
+                }
+            } catch (error) {
+                showAlert("Error: " + error.message, "error");
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById("editMenuModal").style.display = "none";
+            document.getElementById("editMenuForm").reset();
+        }
+
+        async function handleEditMenu(event) {
+            event.preventDefault();
+            
+            const menuId = document.getElementById("editMenuId").value;
+            const name = document.getElementById("editMenuName").value;
+            const price = document.getElementById("editMenuPrice").value;
+            const description = document.getElementById("editMenuDescription").value;
+            const imageFile = document.getElementById("editMenuImage").files[0];
+
+            const formData = new FormData();
+            formData.append("name", name);
+            formData.append("price", price);
+            formData.append("description", description);
+            if (imageFile) {
+                formData.append("image", imageFile);
+            }
+
+            try {
+                const response = await fetch(`/api/menu/${menuId}`, {
+                    method: "PUT",
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert("Menu item berhasil diupdate", "success");
+                    closeEditModal();
+                    loadMenuItems();
+                } else {
+                    showAlert(data.msg || "Gagal mengupdate menu item", "error");
                 }
             } catch (error) {
                 showAlert("Error: " + error.message, "error");
@@ -950,15 +1033,11 @@ x<!DOCTYPE html>
             }
         }
 
-        function editMenu(menuId) {
-            alert("Edit functionality akan segera hadir");
-        }
-
         async function deleteMenu(menuId) {
             if (!confirm("Anda yakin ingin menghapus menu ini?")) return;
 
             try {
-                const response = await fetch(`/api/product/${menuId}`, {
+                const response = await fetch(`/api/menu/${menuId}`, {
                     method: "DELETE",
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -969,7 +1048,7 @@ x<!DOCTYPE html>
                     showAlert("Menu item berhasil dihapus", "success");
                     loadMenuItems();
                 } else {
-                    showAlert(data.message || "Gagal menghapus menu item", "error");
+                    showAlert(data.msg || "Gagal menghapus menu item", "error");
                 }
             } catch (error) {
                 showAlert("Error: " + error.message, "error");

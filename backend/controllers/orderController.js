@@ -1,56 +1,124 @@
 const Order = require("../models/order");
 
+// CREATE NEW ORDER
 exports.createOrder = async (req, res) => {
   try {
     const { items, total, paymentMethod, recipientName, recipientPhone, recipientAddress, notes } = req.body;
-    
+
+    // Validation
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ success: false, msg: "Items empty" });
+      return res.status(400).json({ success: false, msg: "Items cannot be empty" });
+    }
+
+    if (!total || isNaN(total) || total <= 0) {
+      return res.status(400).json({ success: false, msg: "Total must be a positive number" });
+    }
+
+    if (!recipientName || !recipientPhone || !recipientAddress) {
+      return res.status(400).json({ success: false, msg: "Recipient info is required" });
+    }
+
+    const validPaymentMethods = ["xendit", "transfer", "cod"];
+    const method = paymentMethod?.toLowerCase() || "xendit";
+    if (!validPaymentMethods.includes(method)) {
+      return res.status(400).json({ success: false, msg: "Invalid payment method" });
     }
 
     const order = new Order({
       user: req.user._id,
       items,
-      total,
-      paymentMethod: paymentMethod || "xendit",
-      status: "Pending",
-      recipientName,
-      recipientPhone,
-      recipientAddress,
-      notes
+      total: parseFloat(total),
+      paymentMethod: method,
+      status: "pending",
+      paymentStatus: "pending",
+      recipientName: recipientName.trim(),
+      recipientPhone: recipientPhone.trim(),
+      recipientAddress: recipientAddress.trim(),
+      notes: notes?.trim() || ""
     });
-    
-    await order.save();
 
-    res.json({ success: true, order });
+    await order.save();
+    await order.populate("user", "name email");
+
+    res.status(201).json({ success: true, msg: "Order created successfully", data: order });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, msg: "Server error" });
+    console.error("Error creating order:", err);
+    res.status(500).json({ success: false, msg: "Failed to create order" });
   }
 };
 
+// GET ALL ORDERS (ADMIN)
+exports.getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate("user", "name email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, data: orders });
+  } catch (err) {
+    console.error("Error fetching orders:", err);
+    res.status(500).json({ success: false, msg: "Failed to fetch orders" });
+  }
+};
+
+// GET USER'S ORDERS
 exports.getMyOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
-    res.json(orders);
+    const orders = await Order.find({ user: req.user._id })
+      .populate("user", "name email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, data: orders });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, msg: "Server error" });
+    console.error("Error fetching user orders:", err);
+    res.status(500).json({ success: false, msg: "Failed to fetch orders" });
   }
 };
 
+// GET ORDER BY ID
+exports.getOrderById = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findById(orderId).populate("user", "name email");
+
+    if (!order) {
+      return res.status(404).json({ success: false, msg: "Order not found" });
+    }
+
+    // Check authorization
+    const isOwner = order.user._id.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === "admin";
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ success: false, msg: "Not authorized to view this order" });
+    }
+
+    res.status(200).json({ success: true, data: order });
+  } catch (err) {
+    console.error("Error fetching order:", err);
+    res.status(500).json({ success: false, msg: "Failed to fetch order" });
+  }
+};
+
+// UPDATE ORDER STATUS
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
     const { orderId } = req.params;
 
+    // Validation
     if (!status) {
-      return res.status(400).json({ success: false, msg: "Status required" });
+      return res.status(400).json({ success: false, msg: "Status is required" });
     }
 
     const validStatuses = ["pending", "processing", "ready", "completed", "cancelled"];
-    if (!validStatuses.includes(status.toLowerCase())) {
-      return res.status(400).json({ success: false, msg: "Invalid status" });
+    const normalizedStatus = status.toLowerCase();
+
+    if (!validStatuses.includes(normalizedStatus)) {
+      return res.status(400).json({
+        success: false,
+        msg: `Invalid status. Valid statuses are: ${validStatuses.join(", ")}`
+      });
     }
 
     const order = await Order.findById(orderId);
@@ -58,21 +126,43 @@ exports.updateOrderStatus = async (req, res) => {
       return res.status(404).json({ success: false, msg: "Order not found" });
     }
 
-    // Check if user is the owner or is admin
-    const user = req.user;
-    const isOwner = order.user.toString() === user._id.toString();
-    const isAdmin = user.role === "admin";
+    // Check authorization - only owner or admin can update
+    const isOwner = order.user.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === "admin";
 
     if (!isOwner && !isAdmin) {
-      return res.status(403).json({ success: false, msg: "Not authorized" });
+      return res.status(403).json({ success: false, msg: "Not authorized to update this order" });
     }
 
-    order.status = status.toLowerCase();
+    order.status = normalizedStatus;
     await order.save();
 
-    res.json({ success: true, order });
+    res.status(200).json({ success: true, msg: "Order status updated successfully", data: order });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, msg: "Server error" });
+    console.error("Error updating order:", err);
+    res.status(500).json({ success: false, msg: "Failed to update order" });
+  }
+};
+
+// DELETE ORDER (ADMIN ONLY)
+exports.deleteOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    // Check if user is admin
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ success: false, msg: "Only admins can delete orders" });
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ success: false, msg: "Order not found" });
+    }
+
+    await Order.findByIdAndDelete(orderId);
+    res.status(200).json({ success: true, msg: "Order deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting order:", err);
+    res.status(500).json({ success: false, msg: "Failed to delete order" });
   }
 };

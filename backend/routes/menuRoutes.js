@@ -2,6 +2,7 @@
 const router = require("express").Router();
 const menu = require("../controllers/menuController");
 const multer = require("multer");
+const { auth, adminOnly } = require("../middleware/auth");
 
 // MULTER CONFIG
 const storage = multer.diskStorage({
@@ -15,9 +16,13 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // ROUTES
+// Public Routes
 router.get("/", menu.getAll);
-router.post("/", upload.single("image"), menu.create);
-router.put("/:id", upload.single("image"), menu.update);
-router.delete("/:id", menu.remove);
+router.get("/:id", menu.getOne);
+
+// Admin Routes
+router.post("/", auth, adminOnly, upload.single("image"), menu.create);
+router.put("/:id", auth, adminOnly, upload.single("image"), menu.update);
+router.delete("/:id", auth, adminOnly, menu.remove);
 
 module.exports = router;

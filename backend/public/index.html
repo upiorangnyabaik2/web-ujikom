@@ -70,12 +70,13 @@
       <div id="admin-menu-panel" style="display:none; margin-bottom:24px; background:#fff; padding:20px; border-radius:var(--radius-lg); border:1px solid var(--border-color); box-shadow:var(--shadow-md);">
         <h3 style="margin-bottom:12px; color:var(--text-dark); font-weight:700;">Admin - Kelola Menu</h3>
 
-        <div class="admin-form" style="display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap;">
-          <input id="admin-name" type="text" placeholder="Nama menu" style="flex:1; min-width:180px; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius); font-family:'Poppins',sans-serif;" />
-          <input id="admin-price" type="number" placeholder="Harga" style="width:130px; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius); font-family:'Poppins',sans-serif;" />
-          <input id="admin-image" type="text" placeholder="Image URL" style="flex:1; min-width:220px; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius); font-family:'Poppins',sans-serif;" />
-          <input id="admin-desc" type="text" placeholder="Deskripsi (opsional)" style="flex:2; min-width:220px; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius); font-family:'Poppins',sans-serif;" />
-          <button id="admin-add-btn" class="btn-primary" style="height:40px; margin-top:0;">Tambah Menu</button>
+        <div class="admin-form" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+          <input id="admin-name" type="text" placeholder="Nama menu" style="flex:1; min-width:180px; padding:12px; border:1px solid var(--border-color); border-radius:var(--radius); font-family:'Poppins',sans-serif;" />
+          <input id="admin-price" type="number" placeholder="Harga" style="width:130px; padding:12px; border:1px solid var(--border-color); border-radius:var(--radius); font-family:'Poppins',sans-serif;" />
+          <input id="admin-image" type="text" placeholder="Image URL" style="flex:1; min-width:220px; padding:12px; border:1px solid var(--border-color); border-radius:var(--radius); font-family:'Poppins',sans-serif;" />
+          <input id="admin-desc" type="text" placeholder="Deskripsi (opsional)" style="flex:2; min-width:220px; padding:12px; border:1px solid var(--border-color); border-radius:var(--radius); font-family:'Poppins',sans-serif;" />
+          <input id="admin-edit-id" type="hidden" />
+          <button id="admin-add-btn" class="btn-primary" style="padding:12px 28px; height:auto; margin-top:0; white-space:nowrap;">Tambah Menu</button>
         </div>
       </div>
 
@@ -108,7 +109,7 @@
         <h3 id="profile-name" style="font-family:'Playfair Display',serif; font-size:24px; margin-bottom:8px;"></h3>
         <p id="profile-email" style="color:var(--text-light); margin-bottom:24px; font-size:14px;"></p>
         <div style="display:flex; gap:12px;">
-          <button id="btn-logout" class="btn-primary" style="flex:1;">Logout</button>
+          <button id="btn-logout" class="btn-primary" style="flex:1; padding:12px 28px;">Logout</button>
           <button onclick="showPage('orders')" class="btn-secondary" style="flex:1; padding:12px 28px;">Pesanan Saya</button>
         </div>
       </div>

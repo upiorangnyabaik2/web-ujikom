@@ -1,26 +1,62 @@
 const mongoose = require("mongoose");
 
 const OrderSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  user: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: "User", 
+    required: true 
+  },
   items: [
     {
       menuId: String,
       name: String,
-      qty: Number,
-      price: Number,
+      qty: { type: Number, required: true },
+      price: { type: Number, required: true },
       image: String
     }
   ],
-  total: { type: Number, required: true },
-  status: { type: String, default: "Pending" }, // Pending, Accepted, Delivered, Cancelled
-  paymentMethod: { type: String, default: "xendit" }, // xendit, transfer, cod
-  paymentStatus: { type: String, default: "pending" }, // pending, paid, verified, failed
+  total: { 
+    type: Number, 
+    required: true,
+    min: [0, "Total cannot be negative"]
+  },
+  status: { 
+    type: String, 
+    enum: ["pending", "processing", "ready", "completed", "cancelled"],
+    default: "pending" 
+  },
+  paymentMethod: { 
+    type: String, 
+    enum: ["xendit", "transfer", "cod"],
+    default: "xendit" 
+  },
+  paymentStatus: { 
+    type: String, 
+    enum: ["pending", "paid", "verified", "failed"],
+    default: "pending" 
+  },
   
   // Recipient info
-  recipientName: String,
-  recipientPhone: String,
-  recipientAddress: String,
-  notes: String,
+  recipientName: { 
+    type: String, 
+    required: true,
+    trim: true
+  },
+  recipientPhone: { 
+    type: String, 
+    required: true,
+    trim: true
+  },
+  recipientAddress: { 
+    type: String, 
+    required: true,
+    trim: true
+  },
+  notes: { 
+    type: String, 
+    default: "",
+    trim: true
+  },
   
   // Xendit info (if payment method is xendit)
   xenditInvoiceId: String,

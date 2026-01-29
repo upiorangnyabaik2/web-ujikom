@@ -18,6 +18,8 @@ const badge = document.getElementById("badge");
 const cartItemsEl = document.getElementById("cart-items");
 const cartTotalEl = document.getElementById("cart-total");
 const ordersList = document.getElementById("orders-list");
+const grid = document.getElementById("grid");
+const slider = document.getElementById("slider");
 
 // Auth blocks
 const authSection = document.getElementById("page-auth");
@@ -220,7 +222,7 @@ function renderGrid(items){
   grid.innerHTML = "";
   (items || []).forEach(item=>{
     const w = document.createElement("div");
-    w.className = "menu-card"; // use menu-card for admin styling if needed
+    w.className = "menu-card";
     w.dataset.id = item._id;
     w.innerHTML = `
       <img class="menu-img" src="${item.image || '/img/sld1.jpg'}" alt="${item.name}" />
@@ -228,12 +230,10 @@ function renderGrid(items){
         <h3 class="menu-title">${item.name}</h3>
         <p class="menu-price">${formatRp(item.price)}</p>
         <p class="menu-desc">${item.description || ""}</p>
-      </div>
-
-      <div class="action-container">
-        <button class="primary-btn-add" data-id="${item._id}">Add</button><br>
-          <button class="edit-btn" data-id="${item._id}">Edit</button>
-          <button class="delete-btn" data-id="${item._id}">Delete</button>
+        <div class="action-container" style="display: flex; gap: 8px; margin-top: auto;">
+          <button class="primary-btn-add" data-id="${item._id}" style="flex: 1; padding: 10px; background: var(--primary); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.3s ease;">Add</button>
+          <button class="edit-btn" data-id="${item._id}" style="flex: 1; padding: 10px; background: #3498db; color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.3s ease;">Edit</button>
+          <button class="delete-btn" data-id="${item._id}" style="flex: 1; padding: 10px; background: #e74c3c; color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.3s ease;">Delete</button>
         </div>
       </div>
     `;
@@ -256,20 +256,30 @@ document.addEventListener("click", async (e) => {
   if (e.target.classList.contains("edit-btn")) {
     const id = e.target.dataset.id;
     try {
-      const r = await fetch(`${API_MENU}/${id}`);
+      const r = await fetch(`${API_MENU}/${id}`, {
+        headers: token ? { "Authorization": "Bearer " + token } : {}
+      });
       if (!r.ok) return showToast("Gagal ambil data menu");
-      const data = await r.json();
-      if (adminName) adminName.value = data.name || "";
-      if (adminPrice) adminPrice.value = data.price || "";
+      const res = await r.json();
+      const item = res.data || res;
+      
+      if (adminName) adminName.value = item.name || "";
+      if (adminPrice) adminPrice.value = item.price || "";
       if (adminImage) {
         // if file input, leave empty; if text input, set URL
         if (adminImage.type && adminImage.type === "file") adminImage.value = "";
-        else adminImage.value = data.image || "";
+        else adminImage.value = item.image || "";
       }
-      if (adminDesc) adminDesc.value = data.description || "";
+      if (adminDesc) adminDesc.value = item.description || "";
       if (adminEditId) adminEditId.value = id;
-      // show admin panel if hidden
-      if (adminPanel) adminPanel.style.display = "block";
+      
+      // scroll to admin panel
+      if (adminPanel) {
+        adminPanel.style.display = "block";
+        adminPanel.scrollIntoView({ behavior: "smooth" });
+      }
+      
+      showToast("Data menu siap diupdate");
       return;
     } catch (err) {
       console.error(err);
@@ -321,10 +331,15 @@ document.getElementById("slide-right")?.addEventListener("click", ()=> slider.sc
 /* ========== LOAD MENU ========== */
 async function loadMenu(){
   try {
-    const res = await fetch(API_MENU);
+    const res = await fetch(API_MENU, {
+      headers: token ? { "Authorization": "Bearer " + token } : {}
+    });
     if (!res.ok) throw new Error("Failed to load");
     const data = await res.json();
-    MENU = Array.isArray(data) ? data : [];
+    
+    // Handle response format: either array or object with data property
+    MENU = data.data ? (Array.isArray(data.data) ? data.data : []) : (Array.isArray(data) ? data : []);
+    
     renderSlider(MENU);
     renderGrid(MENU);
     updateCartUI();
@@ -435,7 +450,11 @@ async function loadOrders(){
     if (ordersList) ordersList.innerHTML = "Loading orders...";
     const res = await fetch(API_ORDER + "/me", { headers: { "Authorization": "Bearer " + token }});
     if (!res.ok) { if (ordersList) ordersList.innerHTML = "Gagal memuat pesanan."; return; }
-    const arr = await res.json();
+    const response = await res.json();
+    
+    // Handle response format: { success: true, data: [...] } or just array
+    const arr = response.data || response;
+    
     if (!arr || arr.length === 0) { if (ordersList) ordersList.innerHTML = "<p>Tidak ada pesanan.</p>"; return; }
     if (ordersList) ordersList.innerHTML = "";
     arr.forEach(o=>{
@@ -584,102 +603,68 @@ function updateAdminUI(){
   if (!isAdmin && adminEditId) adminEditId.value = "";
 }
 
-// ADD menu (admin form) - supports file input or image URL
+// ADD or UPDATE menu (admin form)
 adminAddBtn?.addEventListener("click", async ()=>{
   const name = adminName?.value?.trim();
   const price = adminPrice?.value;
   const desc = adminDesc?.value?.trim();
+  const editId = adminEditId?.value || "";
 
-  if(!name || !price) return showToast("Name & price wajib");
-  if(!token) return showToast("Admin action requires login");
+  if(!name || !price) return showToast("Nama & harga wajib diisi");
+  if(!token) return showToast("Harus login sebagai admin");
 
   try {
-    // if adminImage is a file input and has files -> use FormData
+    adminAddBtn.disabled = true;
+    adminAddBtn.textContent = editId ? "Updating..." : "Adding...";
+
+    // Determine if we're adding or updating
+    const method = editId ? "PUT" : "POST";
+    const endpoint = editId ? `${API_MENU}/${editId}` : API_MENU;
+
+    // Check if adminImage is a file input with files
     if (adminImage && adminImage.type === "file" && adminImage.files && adminImage.files.length > 0) {
       const fd = new FormData();
       fd.append("name", name);
       fd.append("price", price);
       fd.append("description", desc || "");
       fd.append("image", adminImage.files[0]);
-      const res = await fetch(API_MENU, {
-        method: "POST",
+      
+      const res = await fetch(endpoint, {
+        method: method,
         headers: { "Authorization": "Bearer " + token },
         body: fd
       });
       const j = await res.json();
-      if (!res.ok) return showToast(j.msg || "Gagal tambah");
-      showToast("Menu ditambahkan");
+      if (!res.ok) return showToast(j.msg || `Gagal ${editId ? "update" : "tambah"}`);
+      showToast(editId ? "Menu diperbarui" : "Menu ditambahkan");
     } else {
       // treat adminImage as URL (text input)
       const imageUrl = adminImage?.value?.trim() || "";
-      const res = await fetch(API_MENU, {
-        method: "POST",
+      const res = await fetch(endpoint, {
+        method: method,
         headers: { "Content-Type":"application/json", "Authorization": "Bearer " + token },
         body: JSON.stringify({ name, price, description: desc, image: imageUrl })
       });
       const j = await res.json();
-      if (!res.ok) return showToast(j.msg || "Gagal tambah");
-      showToast("Menu ditambahkan");
+      if (!res.ok) return showToast(j.msg || `Gagal ${editId ? "update" : "tambah"}`);
+      showToast(editId ? "Menu diperbarui" : "Menu ditambahkan");
     }
-    // clear & reload
-    if (adminName) adminName.value = "";
-    if (adminPrice) adminPrice.value = "";
-    if (adminDesc) adminDesc.value = "";
-    if (adminImage && adminImage.type !== "file") adminImage.value = "";
-    await loadMenu();
-  } catch (err) {
-    console.error(err);
-    showToast("Gagal tambah menu");
-  }
-});
-
-// SAVE EDIT (if you created adminSaveBtn + hidden adminEditId)
-adminSaveBtn?.addEventListener("click", async ()=>{
-  const id = adminEditId?.value;
-  if (!id) return showToast("Tidak ada data untuk disimpan");
-  if (!token) return showToast("Admin action requires login");
-
-  const name = adminName?.value?.trim();
-  const price = adminPrice?.value;
-  const desc = adminDesc?.value?.trim();
-
-  try {
-    if (adminImage && adminImage.type === "file" && adminImage.files && adminImage.files.length > 0) {
-      const fd = new FormData();
-      fd.append("name", name);
-      fd.append("price", price);
-      fd.append("description", desc || "");
-      fd.append("image", adminImage.files[0]);
-      const res = await fetch(`${API_MENU}/${id}`, {
-        method: "PUT",
-        headers: { "Authorization": "Bearer " + token },
-        body: fd
-      });
-      const j = await res.json();
-      if (!res.ok) return showToast(j.msg || "Gagal update");
-      showToast("Menu diperbarui");
-    } else {
-      const imageUrl = adminImage?.value?.trim() || "";
-      const res = await fetch(`${API_MENU}/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type":"application/json", "Authorization": "Bearer " + token },
-        body: JSON.stringify({ name, price, description: desc, image: imageUrl })
-      });
-      const j = await res.json();
-      if (!res.ok) return showToast(j.msg || "Gagal update");
-      showToast("Menu diperbarui");
-    }
-
-    // cleanup
+    
+    // Clear form and reset edit mode
     if (adminEditId) adminEditId.value = "";
     if (adminName) adminName.value = "";
     if (adminPrice) adminPrice.value = "";
     if (adminDesc) adminDesc.value = "";
     if (adminImage && adminImage.type !== "file") adminImage.value = "";
+    adminAddBtn.textContent = "Tambah Menu";
+    
     await loadMenu();
   } catch (err) {
     console.error(err);
-    showToast("Gagal update menu");
+    showToast(editId ? "Gagal update menu" : "Gagal tambah menu");
+  } finally {
+    adminAddBtn.disabled = false;
+    adminAddBtn.textContent = "Tambah Menu";
   }
 });
 
