@@ -1,5 +1,5 @@
 // Get cart from localStorage
-let cartItems = JSON.parse(localStorage.getItem("cart")) || [];
+let cartItems = JSON.parse(localStorage.getItem("cart_v1")) || [];
 const token = localStorage.getItem("token");
 
 // Initialize page
@@ -146,6 +146,9 @@ async function processCheckout() {
             const data = await response.json();
 
             if (data.success) {
+                // Hapus cart
+                localStorage.removeItem("cart_v1");
+                
                 // Save order info to localStorage
                 localStorage.setItem(
                     "currentOrder",
@@ -156,8 +159,11 @@ async function processCheckout() {
                     })
                 );
 
-                // Redirect to Xendit invoice URL
-                window.location.href = data.invoiceUrl;
+                // Langsung ke order-success page menampilkan invoice
+                showAlert("Pesanan berhasil dibuat! Silahkan lakukan pembayaran.", "success");
+                setTimeout(() => {
+                    window.location.href = `/order-success?orderId=${data.orderId}`;
+                }, 1500);
             } else {
                 showAlert(data.message || "Gagal membuat checkout", "error");
             }
@@ -178,7 +184,7 @@ async function processCheckout() {
                         image: item.image
                     })),
                     total: total,
-                    status: "Pending",
+                    status: "pending",
                     paymentMethod: "transfer",
                     recipientName,
                     phone,
@@ -190,7 +196,7 @@ async function processCheckout() {
             const data = await response.json();
 
             if (data.success) {
-                localStorage.removeItem("cart");
+                localStorage.removeItem("cart_v1");
                 showAlert("Pesanan berhasil dibuat! Silahkan lakukan transfer ke rekening yang telah diberikan.", "success");
                 setTimeout(() => {
                     window.location.href = `/order-success?orderId=${data.order._id}`;
@@ -215,7 +221,7 @@ async function processCheckout() {
                         image: item.image
                     })),
                     total: total,
-                    status: "Pending",
+                    status: "pending",
                     paymentMethod: "cod",
                     recipientName,
                     phone,
@@ -227,7 +233,7 @@ async function processCheckout() {
             const data = await response.json();
 
             if (data.success) {
-                localStorage.removeItem("cart");
+                localStorage.removeItem("cart_v1");
                 showAlert("Pesanan berhasil dibuat! Pembayaran akan dilakukan saat pesanan sampai.", "success");
                 setTimeout(() => {
                     window.location.href = `/order-success?orderId=${data.order._id}`;

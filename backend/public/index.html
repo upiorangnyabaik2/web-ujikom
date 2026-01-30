@@ -18,6 +18,9 @@
       <button id="nav-home" class="nav-link">Beranda</button>
       <button id="nav-menu" class="nav-link">Menu</button>
       <button id="nav-orders" class="nav-link">Pesanan</button>
+      <a id="admin-link" href="/admin-dashboard.html" class="nav-link" style="display: none; color: #FF6B35; font-weight: 700;">
+        <i class="fa-solid fa-shield" style="margin-right: 6px;"></i>Admin
+      </a>
     </div>
 
     <div class="header-right">
@@ -58,6 +61,67 @@
         <div id="slider" class="slider" aria-live="polite"></div>
         <button id="slide-right" class="slide-btn">&rsaquo;</button>
       </div>
+
+      <!-- FEATURES SECTION -->
+      <h2 class="section-title" style="margin-top: 60px;">Mengapa Pilih Kami?</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fa-solid fa-truck"></i>
+          </div>
+          <h3>Pengiriman Cepat</h3>
+          <p>Makanan sampai dalam 30 menit atau gratis ongkos kirim!</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fa-solid fa-leaf"></i>
+          </div>
+          <h3>Bahan Segar</h3>
+          <p>Semua makanan dibuat dari bahan pilihan berkualitas tinggi.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fa-solid fa-lock"></i>
+          </div>
+          <h3>Pembayaran Aman</h3>
+          <p>Transaksi Anda dilindungi dengan enkripsi tingkat bank.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fa-solid fa-headset"></i>
+          </div>
+          <h3>Dukungan 24/7</h3>
+          <p>Tim customer service siap membantu kapan saja.</p>
+        </div>
+      </div>
+
+      <!-- STATISTICS SECTION -->
+      <h2 class="section-title" style="margin-top: 60px;">Terpercaya oleh Ribuan Pelanggan</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number">10K+</div>
+          <div class="stat-label">Pelanggan Puas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">500+</div>
+          <div class="stat-label">Menu Pilihan</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">50K+</div>
+          <div class="stat-label">Pesanan Terkirim</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">4.8⭐</div>
+          <div class="stat-label">Rating Pelanggan</div>
+        </div>
+      </div>
+
+      <!-- CTA SECTION -->
+      <div class="cta-banner">
+        <h2>Pesan Sekarang dan Dapatkan Diskon 20% untuk Pembelian Pertama!</h2>
+        <p>Gunakan kode promo: <span class="promo-code">WELCOME20</span></p>
+        <button id="cta-menu-banner" class="btn-primary" style="font-size: 16px; padding: 14px 32px; margin-top: 20px;">Lihat Menu Lengkap</button>
+      </div>
     </section>
 
 
@@ -66,18 +130,21 @@
 
       <h2 class="section-title">Menu</h2>
 
-      <!-- ADMIN PANEL (Hidden by default, shown only for admin) -->
-      <div id="admin-menu-panel" style="display:none; margin-bottom:24px; background:#fff; padding:20px; border-radius:var(--radius-lg); border:1px solid var(--border-color); box-shadow:var(--shadow-md);">
-        <h3 style="margin-bottom:12px; color:var(--text-dark); font-weight:700;">Admin - Kelola Menu</h3>
-
-        <div class="admin-form" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
-          <input id="admin-name" type="text" placeholder="Nama menu" style="flex:1; min-width:180px; padding:12px; border:1px solid var(--border-color); border-radius:var(--radius); font-family:'Poppins',sans-serif;" />
-          <input id="admin-price" type="number" placeholder="Harga" style="width:130px; padding:12px; border:1px solid var(--border-color); border-radius:var(--radius); font-family:'Poppins',sans-serif;" />
-          <input id="admin-image" type="text" placeholder="Image URL" style="flex:1; min-width:220px; padding:12px; border:1px solid var(--border-color); border-radius:var(--radius); font-family:'Poppins',sans-serif;" />
-          <input id="admin-desc" type="text" placeholder="Deskripsi (opsional)" style="flex:2; min-width:220px; padding:12px; border:1px solid var(--border-color); border-radius:var(--radius); font-family:'Poppins',sans-serif;" />
-          <input id="admin-edit-id" type="hidden" />
-          <button id="admin-add-btn" class="btn-primary" style="padding:12px 28px; height:auto; margin-top:0; white-space:nowrap;">Tambah Menu</button>
+      <!-- SEARCH CONTAINER -->
+      <div id="search-container" style="margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
+        <div style="flex: 1; position: relative;">
+          <input 
+            id="search-input" 
+            type="text" 
+            placeholder="Cari makanan yang diinginkan..." 
+            style="width: 100%; padding: 12px 16px 12px 40px; border: 1px solid var(--border-color); border-radius: var(--radius); font-family: 'Poppins', sans-serif; font-size: 14px; transition: all 0.3s ease;"
+            autocomplete="off"
+          />
+          <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-light); pointer-events: none;"></i>
         </div>
+        <button id="clear-search" class="icon-btn" title="Bersihkan pencarian" style="width: auto; padding: 0 12px; display: none;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
 
       <!-- MENU GRID -->
@@ -131,6 +198,12 @@
 
   </main>
 
+  <!-- FOOTER -->
+  <footer class="footer" style="background: var(--primary); color: white; text-align: center; padding: 24px; margin-top: 40px; font-size: 14px;">
+    <p style="margin: 0; color: rgba(255, 255, 255, 0.9);">
+      &copy; 2026 FoodOnline. Hak Cipta Dilindungi. Semua hak reserved.
+    </p>
+  </footer>
 
   <!-- DETAIL MODAL -->
   <div id="detail-modal" class="modal" aria-hidden="true">

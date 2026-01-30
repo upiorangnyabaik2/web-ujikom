@@ -15,13 +15,14 @@ const getXenditHeaders = () => {
 
 // Mock invoice URL untuk testing tanpa API key
 const generateMockInvoiceUrl = (orderId) => {
-  return `http://localhost:5000/mock-payment?orderId=${orderId}&status=success`;
+  const baseUrl = process.env.CLIENT_URL || "http://localhost:5000";
+  return `${baseUrl}/order-success?orderId=${orderId}&mock=true`;
 };
 
 // Create Checkout
 exports.createCheckout = async (req, res) => {
   try {
-    const { items, total } = req.body;
+    const { items, total, paymentMethod, recipientName, phone, address, notes } = req.body;
     const userId = req.user.id;
 
     // Create order first
@@ -29,7 +30,12 @@ exports.createCheckout = async (req, res) => {
       user: userId,
       items,
       total,
-      status: "Pending",
+      status: "pending",
+      paymentMethod: paymentMethod || "xendit",
+      recipientName,
+      recipientPhone: phone,
+      recipientAddress: address,
+      notes
     });
 
     await order.save();

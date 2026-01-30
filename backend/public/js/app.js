@@ -45,6 +45,10 @@ const detailPrice = document.getElementById("detail-price");
 const addDetail = document.getElementById("add-detail");
 const closeDetail = document.getElementById("close-detail");
 
+// Search elements
+const searchInput = document.getElementById("search-input");
+const clearSearchBtn = document.getElementById("clear-search");
+
 /* ========== STATE ========== */
 let MENU = [];
 let CART = JSON.parse(localStorage.getItem("cart_v1") || "[]");
@@ -147,6 +151,7 @@ document.getElementById("btn-open-auth")?.addEventListener("click", ()=>{
   updateProfileUI();
 });
 document.getElementById("cta-menu")?.addEventListener("click", ()=> showPage("menu"));
+document.getElementById("cta-menu-banner")?.addEventListener("click", ()=> showPage("menu"));
 
 /* ========== CART ========== */
 function addToCart(item) {
@@ -217,8 +222,6 @@ function renderSlider(items){
 
 function renderGrid(items){
   if(!grid) return;
-  const user = getUser();
-  const isAdmin = user && user.role === "admin";
   grid.innerHTML = "";
   (items || []).forEach(item=>{
     const w = document.createElement("div");
@@ -232,8 +235,6 @@ function renderGrid(items){
         <p class="menu-desc">${item.description || ""}</p>
         <div class="action-container" style="display: flex; gap: 8px; margin-top: auto;">
           <button class="primary-btn-add" data-id="${item._id}" style="flex: 1; padding: 10px; background: var(--primary); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.3s ease;">Add</button>
-          <button class="edit-btn" data-id="${item._id}" style="flex: 1; padding: 10px; background: #3498db; color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.3s ease;">Edit</button>
-          <button class="delete-btn" data-id="${item._id}" style="flex: 1; padding: 10px; background: #e74c3c; color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.3s ease;">Delete</button>
         </div>
       </div>
     `;
@@ -395,6 +396,13 @@ function updateProfileUI(){
   const user = getUser();
   const profileArea = document.getElementById("profile-area");
   const profileCard = document.getElementById("profile-card");
+  const isAdmin = user && user.role === "admin";
+  
+  // Hide orders nav for admin
+  const navOrders = document.getElementById("nav-orders");
+  if (navOrders) {
+    navOrders.style.display = isAdmin ? "none" : "block";
+  }
 
   if (user) {
     // hide "not logged"
@@ -599,6 +607,11 @@ function updateAdminUI(){
   const isAdmin = user && user.role === "admin";
   if (adminPanel) adminPanel.style.display = isAdmin ? "block" : "none";
   document.querySelectorAll(".admin-actions").forEach(a=> a.style.display = isAdmin ? "block" : "none");
+  
+  // Show/hide admin link di header
+  const adminLink = document.getElementById("admin-link");
+  if (adminLink) adminLink.style.display = isAdmin ? "inline-flex" : "none";
+  
   // when admin becomes available, make sure edit-id cleared
   if (!isAdmin && adminEditId) adminEditId.value = "";
 }
@@ -667,6 +680,41 @@ adminAddBtn?.addEventListener("click", async ()=>{
     adminAddBtn.textContent = "Tambah Menu";
   }
 });
+
+/* ========== SEARCH FUNCTIONALITY ========== */
+function filterMenu(searchTerm) {
+  const term = searchTerm.toLowerCase().trim();
+  
+  if (!term) {
+    renderGrid(MENU);
+    if (clearSearchBtn) clearSearchBtn.style.display = "none";
+    return;
+  }
+  
+  const filtered = MENU.filter(item => 
+    item.name.toLowerCase().includes(term) || 
+    (item.description && item.description.toLowerCase().includes(term))
+  );
+  
+  renderGrid(filtered);
+  if (clearSearchBtn) clearSearchBtn.style.display = "flex";
+}
+
+if (searchInput) {
+  searchInput.addEventListener("input", (e) => {
+    filterMenu(e.target.value);
+  });
+}
+
+if (clearSearchBtn) {
+  clearSearchBtn.addEventListener("click", () => {
+    if (searchInput) {
+      searchInput.value = "";
+      searchInput.focus();
+    }
+    filterMenu("");
+  });
+}
 
 /* ========== INITIALIZE ========== */
 (async ()=>{

@@ -580,7 +580,12 @@ x<!DOCTYPE html>
         <div class="admin-content">
             <!-- Header -->
             <div class="admin-header">
-                <h1>Admin Dashboard</h1>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <button class="logout-btn" onclick="window.history.back()" style="background: var(--secondary); margin: 0; padding: 10px 20px;">
+                        <i class="fas fa-arrow-left" style="margin-right: 8px;"></i>Back
+                    </button>
+                    <h1 style="margin: 0;">Admin Dashboard</h1>
+                </div>
                 <div class="admin-user">
                     <div class="admin-user-info">
                         <div class="admin-user-name" id="adminName">Admin</div>
@@ -662,7 +667,8 @@ x<!DOCTYPE html>
             <!-- Orders Section -->
             <section id="orders-section" class="section">
                 <div class="admin-section">
-                    <h2>All Orders</h2>
+                    <h2>Manage Orders</h2>
+                    <div id="alertBox" class="alert"></div>
                     <div id="ordersList" class="table-responsive">
                         <div class="loading">
                             <div class="spinner"></div>
@@ -836,6 +842,7 @@ x<!DOCTYPE html>
                                     <th>Status</th>
                                     <th>Payment Method</th>
                                     <th>Date</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -843,19 +850,58 @@ x<!DOCTYPE html>
                                     <tr>
                                         <td>${order._id.substring(0, 8)}...</td>
                                         <td>${order.recipientName}</td>
-                                        <td>${order.phone}</td>
+                                        <td>${order.recipientPhone}</td>
                                         <td>Rp ${formatCurrency(order.total)}</td>
                                         <td><span class="order-status status-${order.status.toLowerCase()}">${order.status}</span></td>
                                         <td>${order.paymentMethod || 'N/A'}</td>
                                         <td>${new Date(order.createdAt).toLocaleDateString('id-ID')}</td>
+                                        <td>
+                                            <select class="status-select" onchange="updateOrderStatus('${order._id}', this.value)" style="padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; cursor: pointer;">
+                                                <option value="">Change Status</option>
+                                                <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                                <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>Processing</option>
+                                                <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>Ready</option>
+                                                <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                                <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                            </select>
+                                        </td>
                                     </tr>
                                 `).join('')}
                             </tbody>
                         </table>
                     `;
+                } else {
+                    document.getElementById("ordersList").innerHTML = '<p style="padding: 20px; text-align: center; color: var(--text-light);">No orders found</p>';
                 }
             } catch (error) {
                 console.error("Error loading orders:", error);
+                document.getElementById("ordersList").innerHTML = '<p style="padding: 20px; text-align: center; color: red;">Error loading orders</p>';
+            }
+        }
+
+        async function updateOrderStatus(orderId, newStatus) {
+            if (!newStatus) return;
+
+            try {
+                const response = await fetch(`/api/order/${orderId}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert(`Order status updated to ${newStatus}`, "success");
+                    loadOrders();
+                } else {
+                    showAlert(data.message || "Failed to update order status", "error");
+                }
+            } catch (error) {
+                showAlert("Error: " + error.message, "error");
             }
         }
 

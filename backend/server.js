@@ -29,10 +29,20 @@ app.get("/mock-payment", (req, res) => {
   
   // Redirect to success or failed page
   if (status === "success") {
-    res.redirect(`/order-success.html?orderId=${orderId}&mock=true`);
+    return res.redirect(`/order-success.html?orderId=${orderId}&mock=true`);
   } else {
-    res.redirect(`/order-failed.html?orderId=${orderId}&mock=true`);
+    return res.redirect(`/order-failed.html?orderId=${orderId}&mock=true`);
   }
+});
+
+// Payment Success Handler (dari Xendit callback atau mock)
+app.get("/order-success", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/order-success.html"));
+});
+
+// Payment Failed Handler
+app.get("/order-failed", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/order-failed.html"));
 });
 
 // Fallback to index.html untuk SPA routing
