@@ -3,8 +3,6 @@ const API_AUTH = "/api/auth";
 const API_MENU = "/api/menu";
 const API_ORDER = "/api/order";
 
-
-
 /* ========== PAGE ELEMENTS ========== */
 const pages = {
   home: document.getElementById("page-home"),
@@ -26,15 +24,15 @@ const authSection = document.getElementById("page-auth");
 const loginForm = document.getElementById("login-form");
 const registerForm = document.getElementById("register-form");
 
-// Admin panel inputs (if present in DOM)
-const adminPanel = document.getElementById("admin-menu-panel"); // optional
+// Admin panel inputs
+const adminPanel = document.getElementById("admin-menu-panel");
 const adminName = document.getElementById("admin-name");
 const adminPrice = document.getElementById("admin-price");
-const adminImage = document.getElementById("admin-image"); // can be <input type="file"> or text URL
+const adminImage = document.getElementById("admin-image");
 const adminDesc = document.getElementById("admin-desc");
 const adminAddBtn = document.getElementById("admin-add-btn");
-const adminSaveBtn = document.getElementById("admin-save-btn"); // optional (edit save)
-const adminEditId = document.getElementById("admin-edit-id"); // hidden input to store edit id
+const adminSaveBtn = document.getElementById("admin-save-btn");
+const adminEditId = document.getElementById("admin-edit-id");
 
 // Detail modal
 const detailModal = document.getElementById("detail-modal");
@@ -63,10 +61,41 @@ function persist() {
   localStorage.setItem("cart_v1", JSON.stringify(CART || []));
   updateCartUI();
 }
+
+// --- UPDATE: FUNGSI TOAST YANG LEBIH CANGGIH ---
 function showToast(msg) {
-  if (window.toastr) return toastr.info(msg);
+  // 1. Coba pakai library Toastr jika ada
+  if (window.toastr) {
+     return toastr.success(msg); // Pakai 'success' biar warna hijau
+  }
+  
+  // 2. Fallback: Buat notifikasi sendiri jika tidak ada library
+  let t = document.getElementById("custom-toast-box");
+  if (!t) {
+    t = document.createElement("div");
+    t.id = "custom-toast-box";
+    // Style notifikasi: Hitam, Pojok Kanan Bawah
+    t.style.cssText = "position:fixed; bottom:20px; right:20px; background: rgba(0,0,0,0.8); color:white; padding:12px 24px; border-radius:8px; z-index:9999; font-size:14px; font-weight:500; transition: all 0.3s ease; opacity:0; transform: translateY(20px); box-shadow: 0 4px 12px rgba(0,0,0,0.15);";
+    document.body.appendChild(t);
+  }
+  
+  t.innerHTML = `<i class="fa-solid fa-check-circle" style="margin-right:8px; color:#4CAF50;"></i> ${msg}`;
+  
+  // Animasi Muncul
+  requestAnimationFrame(() => {
+      t.style.opacity = "1";
+      t.style.transform = "translateY(0)";
+  });
+
+  // Hilang setelah 3 detik
+  setTimeout(() => {
+    t.style.opacity = "0";
+    t.style.transform = "translateY(20px)";
+  }, 3000);
+  
   console.log("TOAST:", msg);
 }
+
 function getUser() {
   try { return JSON.parse(localStorage.getItem("user") || "null"); } catch(e){ return null; }
 }
@@ -98,7 +127,6 @@ async function verifyTokenOnLoad() {
     }
   } catch (e) {
     console.error("verify error", e);
-    // do not remove token here; verify may fail due to network — but it's safe to clear if you want
   } finally {
     updateProfileUI();
     updateAdminUI();
@@ -132,11 +160,10 @@ function showPage(name) {
     
     if (id === "nav-profile") {
       const user = getUser();
-      // FIX DISINI
       if (user) showPage("profile");
       else {
-        showPage("profile");      // tetap masuk page profile
-        updateProfileUI();        // tampilkan login area
+        showPage("profile");      
+        updateProfileUI();        
       }
       return;
     }
@@ -238,6 +265,12 @@ function renderGrid(items){
         </div>
       </div>
     `;
+
+    w.addEventListener("click", (e)=>{
+      if (e.target.classList.contains("primary-btn-add")) return;
+      openDetail(item);
+    });
+
     grid.appendChild(w);
   });
 }
@@ -245,11 +278,15 @@ function renderGrid(items){
 /* ========== GLOBAL DELEGATED CLICK HANDLER ========== */
 document.addEventListener("click", async (e) => {
 
-  // ADD TO CART (from grid)
+  // --- PERBAIKAN: ADD TO CART (PAKAI showToast) ---
   if (e.target.classList.contains("primary-btn-add")) {
     const id = e.target.dataset.id;
     const it = MENU.find(x => x._id === id);
-    if (it) addToCart(it);
+    if (it) {
+        addToCart(it);
+        // Tampilkan Toast Notifikasi
+        showToast("Berhasil masuk keranjang");
+    }
     return;
   }
 
@@ -267,14 +304,12 @@ document.addEventListener("click", async (e) => {
       if (adminName) adminName.value = item.name || "";
       if (adminPrice) adminPrice.value = item.price || "";
       if (adminImage) {
-        // if file input, leave empty; if text input, set URL
         if (adminImage.type && adminImage.type === "file") adminImage.value = "";
         else adminImage.value = item.image || "";
       }
       if (adminDesc) adminDesc.value = item.description || "";
       if (adminEditId) adminEditId.value = id;
       
-      // scroll to admin panel
       if (adminPanel) {
         adminPanel.style.display = "block";
         adminPanel.scrollIntoView({ behavior: "smooth" });
@@ -323,7 +358,15 @@ function openDetail(item){
   if (detailModal) detailModal.classList.add("open");
 }
 closeDetail?.addEventListener("click", ()=> detailModal.classList.remove("open"));
-addDetail?.addEventListener("click", ()=> { if (currentDetail) addToCart(currentDetail); detailModal.classList.remove("open"); });
+
+// --- PERBAIKAN: ADD TO CART DARI DETAIL MODAL (PAKAI showToast) ---
+addDetail?.addEventListener("click", ()=> { 
+    if (currentDetail) {
+        addToCart(currentDetail);
+        showToast("Berhasil masuk keranjang");
+    }
+    detailModal.classList.remove("open"); 
+});
 
 /* ========== SLIDER CONTROLS ========== */
 document.getElementById("slide-left")?.addEventListener("click", ()=> slider.scrollBy({left:-360, behavior:"smooth"}));
@@ -338,7 +381,6 @@ async function loadMenu(){
     if (!res.ok) throw new Error("Failed to load");
     const data = await res.json();
     
-    // Handle response format: either array or object with data property
     MENU = data.data ? (Array.isArray(data.data) ? data.data : []) : (Array.isArray(data) ? data : []);
     
     renderSlider(MENU);
@@ -398,26 +440,18 @@ function updateProfileUI(){
   const profileCard = document.getElementById("profile-card");
   const isAdmin = user && user.role === "admin";
   
-  // Hide orders nav for admin
   const navOrders = document.getElementById("nav-orders");
   if (navOrders) {
     navOrders.style.display = isAdmin ? "none" : "block";
   }
 
   if (user) {
-    // hide "not logged"
     profileArea.style.display = "none";
-
-    // show profile card
     profileCard.style.display = "block";
-
     document.getElementById("profile-name").innerText = user.name || "";
     document.getElementById("profile-email").innerText = user.email || "";
   } else {
-    // show "not logged"
     profileArea.style.display = "block";
-
-    // hide profile card
     profileCard.style.display = "none";
   }
 }
@@ -444,10 +478,7 @@ document.getElementById("checkout")?.addEventListener("click", async ()=>{
     return;
   }
   
-  // Simpan cart ke localStorage dengan key "cart" (untuk checkout.html)
   localStorage.setItem("cart", JSON.stringify(CART));
-  
-  // Redirect ke checkout page
   window.location.href = "/checkout.html";
 });
 
@@ -460,7 +491,6 @@ async function loadOrders(){
     if (!res.ok) { if (ordersList) ordersList.innerHTML = "Gagal memuat pesanan."; return; }
     const response = await res.json();
     
-    // Handle response format: { success: true, data: [...] } or just array
     const arr = response.data || response;
     
     if (!arr || arr.length === 0) { if (ordersList) ordersList.innerHTML = "<p>Tidak ada pesanan.</p>"; return; }
@@ -526,14 +556,12 @@ function showOrderDetail(orderData){
   document.getElementById("order-id").innerText = orderData._id;
   document.getElementById("order-date").innerText = new Date(orderData.createdAt).toLocaleString();
   
-  // Show status badge dan select sesuai role
   const statusColor = statusColors[orderData.status] || "#999";
   const statusLabel = statusLabels[orderData.status] || orderData.status;
   orderStatusBadge.innerText = statusLabel;
   orderStatusBadge.style.backgroundColor = statusColor;
   orderStatusSelect.value = orderData.status;
   
-  // Hanya admin yang bisa mengubah status
   if (isAdmin) {
     orderStatusBadge.style.display = "none";
     orderStatusSelect.style.display = "inline-block";
@@ -596,7 +624,6 @@ async function updateOrderStatus(){
   }
 }
 
-// Event listeners untuk order detail modal
 document.getElementById("close-order-detail")?.addEventListener("click", closeOrderDetail);
 document.getElementById("btn-close-order-detail")?.addEventListener("click", closeOrderDetail);
 document.getElementById("btn-save-status")?.addEventListener("click", updateOrderStatus);
@@ -608,11 +635,9 @@ function updateAdminUI(){
   if (adminPanel) adminPanel.style.display = isAdmin ? "block" : "none";
   document.querySelectorAll(".admin-actions").forEach(a=> a.style.display = isAdmin ? "block" : "none");
   
-  // Show/hide admin link di header
   const adminLink = document.getElementById("admin-link");
   if (adminLink) adminLink.style.display = isAdmin ? "inline-flex" : "none";
   
-  // when admin becomes available, make sure edit-id cleared
   if (!isAdmin && adminEditId) adminEditId.value = "";
 }
 
@@ -630,11 +655,9 @@ adminAddBtn?.addEventListener("click", async ()=>{
     adminAddBtn.disabled = true;
     adminAddBtn.textContent = editId ? "Updating..." : "Adding...";
 
-    // Determine if we're adding or updating
     const method = editId ? "PUT" : "POST";
     const endpoint = editId ? `${API_MENU}/${editId}` : API_MENU;
 
-    // Check if adminImage is a file input with files
     if (adminImage && adminImage.type === "file" && adminImage.files && adminImage.files.length > 0) {
       const fd = new FormData();
       fd.append("name", name);
@@ -651,7 +674,6 @@ adminAddBtn?.addEventListener("click", async ()=>{
       if (!res.ok) return showToast(j.msg || `Gagal ${editId ? "update" : "tambah"}`);
       showToast(editId ? "Menu diperbarui" : "Menu ditambahkan");
     } else {
-      // treat adminImage as URL (text input)
       const imageUrl = adminImage?.value?.trim() || "";
       const res = await fetch(endpoint, {
         method: method,
@@ -663,7 +685,6 @@ adminAddBtn?.addEventListener("click", async ()=>{
       showToast(editId ? "Menu diperbarui" : "Menu ditambahkan");
     }
     
-    // Clear form and reset edit mode
     if (adminEditId) adminEditId.value = "";
     if (adminName) adminName.value = "";
     if (adminPrice) adminPrice.value = "";

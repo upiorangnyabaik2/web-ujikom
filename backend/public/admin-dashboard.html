@@ -342,6 +342,36 @@ x<!DOCTYPE html>
             margin-top: auto;
         }
 
+        /* Fix: override global .menu-card::before overlay which may block clicks
+           when using different markup on the admin dashboard */
+        .menu-list .menu-card::before {
+            display: none !important;
+        }
+
+        /* Ensure action buttons are above any background layers */
+        .menu-list .menu-card .menu-card-actions {
+            position: relative;
+            z-index: 5;
+        }
+
+        /* Limit long descriptions so action buttons remain visible */
+        .menu-list .menu-card small {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-height: calc(1.2em * 3);
+            color: var(--text-light);
+            margin-bottom: 10px;
+        }
+
+        /* Prefer auto height for admin cards so content flows naturally */
+        .menu-list .menu-card {
+            height: auto !important;
+            min-height: 220px;
+        }
+
         .menu-card-actions button {
             flex: 1;
             padding: 10px 12px;

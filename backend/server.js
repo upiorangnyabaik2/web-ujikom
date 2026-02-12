@@ -21,6 +21,7 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/menu", require("./routes/menuRoutes"));
 app.use("/api/order", require("./routes/orderRoutes"));
 app.use("/api/checkout", require("./routes/checkoutRoutes"));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Mock Payment Endpoint untuk testing (tanpa Xendit API key)
 app.get("/mock-payment", (req, res) => {
