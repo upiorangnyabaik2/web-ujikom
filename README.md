@@ -1,4 +1,4 @@
-# FoodOnline Backend
+# FoodOnline
 
 Express + MongoDB backend untuk aplikasi pemesanan makanan.
 
@@ -8,6 +8,10 @@ Express + MongoDB backend untuk aplikasi pemesanan makanan.
 - API untuk: autentikasi, menu, order, checkout, Xendit integration
 - Admin dapat mengelola menu dengan CRUD
 - Checkout mendukung invoice Xendit dan webhook pembayaran
+
+## Frontend
+
+Frontend adalah aplikasi web statis yang disajikan oleh backend Express. File frontend terletak di `backend/public/` dan mencakup halaman-halaman seperti login, register, menu, checkout, dan dashboard admin.
 
 ## Instalasi
 
@@ -27,6 +31,8 @@ Express + MongoDB backend untuk aplikasi pemesanan makanan.
 - `npm run dev` — jalankan server dengan `nodemon`
 - `npm start` — jalankan server dengan `node`
 - `npm run seed` — seed data awal jika tersedia
+
+Setelah server berjalan, akses aplikasi di `http://localhost:5000` untuk frontend, dan API di `http://localhost:5000/api/*`.
 
 ## Struktur Proyek
 
@@ -49,6 +55,10 @@ Express + MongoDB backend untuk aplikasi pemesanan makanan.
 - `dotenv`
 - `multer`
 - `axios`
+
+## Dependensi Development
+
+- `nodemon`
 
 ## Environment Variables
 
@@ -93,6 +103,12 @@ Contoh variabel yang diperlukan:
 - `GET /api/checkout/invoice/:invoiceId`
 - `GET /api/checkout/order/:orderId`
 - `POST /api/checkout/webhook/xendit`
+
+## Testing
+
+Untuk testing pembayaran secara lokal, gunakan endpoint mock:
+- `GET /mock-payment?orderId=<orderId>&status=success` — simulasi pembayaran berhasil
+- `GET /mock-payment?orderId=<orderId>&status=failed` — simulasi pembayaran gagal
 
 ## Fitur Utama
 
