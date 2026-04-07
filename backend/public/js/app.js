@@ -467,6 +467,9 @@ function updateProfileUI(){
   const user = getUser();
   const profileArea = document.getElementById("profile-area");
   const profileCard = document.getElementById("profile-card");
+  const profileEditForm = document.getElementById("profile-edit-form");
+  const editName = document.getElementById("edit-name");
+  const editEmail = document.getElementById("edit-email");
   const isAdmin = user && user.role === "admin";
   
   const navOrders = document.getElementById("nav-orders");
@@ -479,11 +482,89 @@ function updateProfileUI(){
     profileCard.style.display = "block";
     document.getElementById("profile-name").innerText = user.name || "";
     document.getElementById("profile-email").innerText = user.email || "";
+    document.getElementById("profile-role").innerText = user.role ? `Role: ${user.role}` : "Role: pengguna";
+
+    const profilePic = document.getElementById("profile-pic");
+    const initials = user.name ? user.name.split(" ").map(part => part[0]).join("").slice(0, 2) : "U";
+    profilePic.src = user.profileImage ? user.profileImage : `https://ui-avatars.com/api/?name=${encodeURIComponent(initials)}&background=ff6b22&color=ffffff&rounded=true&size=256`;
+    profilePic.alt = user.name ? `Foto profil ${user.name}` : "Profil pengguna";
+
+    if (editName) editName.value = user.name || "";
+    if (editEmail) editEmail.value = user.email || "";
+    if (document.getElementById("edit-profile-image")) document.getElementById("edit-profile-image").value = "";
+
+    if (profileEditForm) {
+      profileEditForm.style.display = "none";
+    }
   } else {
     profileArea.style.display = "block";
     profileCard.style.display = "none";
+    if (profileEditForm) profileEditForm.style.display = "none";
+    const profilePic = document.getElementById("profile-pic");
+    if (profilePic) {
+      profilePic.src = "/img/profile.jpg";
+      profilePic.alt = "Profile default";
+    }
   }
 }
+
+const profileEditButton = document.getElementById("btn-edit-profile");
+const profileCancelButton = document.getElementById("btn-cancel-edit");
+const profileEditFormElement = document.getElementById("profile-edit-form");
+const editNameInput = document.getElementById("edit-name");
+const editEmailInput = document.getElementById("edit-email");
+
+profileEditButton?.addEventListener("click", () => {
+  if (profileEditFormElement) {
+    profileEditFormElement.style.display = "block";
+    profileEditFormElement.scrollIntoView({ behavior: "smooth" });
+  }
+});
+
+profileCancelButton?.addEventListener("click", () => {
+  if (profileEditFormElement) {
+    profileEditFormElement.style.display = "none";
+  }
+});
+
+profileEditFormElement?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const nameValue = editNameInput?.value.trim() || "";
+  const emailValue = editEmailInput?.value.trim() || "";
+  const profileFile = document.getElementById("edit-profile-image")?.files?.[0];
+  if (!nameValue || !emailValue) {
+    return showToast("Nama dan email harus diisi");
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append("name", nameValue);
+    formData.append("email", emailValue);
+    if (profileFile) {
+      formData.append("profileImage", profileFile);
+    }
+
+    const res = await fetch("/api/auth/profile", {
+      method: "PUT",
+      headers: {
+        ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+    const data = await res.json();
+    if (!data.success) {
+      return showToast(data.msg || "Gagal memperbarui profil");
+    }
+
+    localStorage.setItem("user", JSON.stringify(data.user));
+    updateProfileUI();
+    showToast("Profil berhasil diperbarui");
+    if (profileEditFormElement) profileEditFormElement.style.display = "none";
+  } catch (error) {
+    console.error(error);
+    showToast("Terjadi kesalahan saat menyimpan profil");
+  }
+});
 
 /* ========== LOGOUT ========== */
 document.getElementById("btn-logout")?.addEventListener("click", ()=>{

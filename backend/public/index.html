@@ -169,15 +169,55 @@
         <a href="/login.html" class="btn-primary" style="display:inline-block;">Login Sekarang</a>
       </div>
 
-      <div id="profile-card" class="profile-card" style="display:none; max-width:500px; margin:40px auto;">
-        <div style="position:relative; margin-bottom:20px;">
-          <img id="profile-pic" src="/img/profile.jpg" class="profile-pic" alt="profile" style="box-shadow:0 8px 24px rgba(255,107,53,0.3); border:4px solid var(--primary);">
+      <div id="profile-card" class="profile-card" style="display:none; max-width:540px; margin:40px auto;">
+        <div class="profile-card-top">
+          <div class="profile-avatar-wrap">
+            <img id="profile-pic" src="/img/profile.jpg" class="profile-pic" alt="profile">
+          </div>
+          <span class="profile-badge" id="profile-badge">Member Aktif</span>
         </div>
-        <h3 id="profile-name" style="font-family:'Playfair Display',serif; font-size:24px; margin-bottom:8px;"></h3>
-        <p id="profile-email" style="color:var(--text-light); margin-bottom:24px; font-size:14px;"></p>
-        <div style="display:flex; gap:12px;">
-          <button id="btn-logout" class="btn-primary" style="flex:1; padding:12px 28px;">Logout</button>
-          <button onclick="showPage('orders')" class="btn-secondary" style="flex:1; padding:12px 28px;">Pesanan Saya</button>
+        <div class="profile-card-body">
+          <h3 id="profile-name"></h3>
+          <p id="profile-email"></p>
+          <p id="profile-role" class="profile-role"></p>
+
+          <div class="profile-details">
+            <div class="profile-detail">
+              <span>Akses Akun</span>
+              <strong>Pribadi</strong>
+            </div>
+            <div class="profile-detail">
+              <span>Status</span>
+              <strong>Aktif</strong>
+            </div>
+          </div>
+
+          <div class="profile-actions">
+            <button id="btn-logout" class="btn-primary">Logout</button>
+            <button onclick="showPage('orders')" class="btn-secondary">Pesanan Saya</button>
+          </div>
+          <button id="btn-edit-profile" class="btn-secondary" style="width:100%; margin-top:18px;">Edit Profil</button>
+
+          <form id="profile-edit-form" class="profile-edit-form" style="display:none; margin-top:24px;">
+            <div class="profile-edit-grid">
+              <label>
+                Nama Lengkap
+                <input id="edit-name" type="text" placeholder="Nama lengkap" />
+              </label>
+              <label>
+                Email
+                <input id="edit-email" type="email" placeholder="Email" />
+              </label>
+              <label>
+                Foto Profil
+                <input id="edit-profile-image" type="file" accept="image/*" />
+              </label>
+            </div>
+            <div class="profile-actions profile-edit-actions">
+              <button type="submit" class="btn-primary">Simpan</button>
+              <button type="button" id="btn-cancel-edit" class="btn-secondary">Batal</button>
+            </div>
+          </form>
         </div>
       </div>
 

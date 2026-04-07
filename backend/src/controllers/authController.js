@@ -30,6 +30,7 @@ exports.register = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        profileImage: user.profileImage || null,
         role: user.role,
       },
     });
@@ -65,6 +66,7 @@ exports.login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        profileImage: user.profileImage || null,
         role: user.role,
       },
     });
@@ -86,6 +88,53 @@ exports.verify = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        profileImage: user.profileImage || null,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, msg: error.message });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, email } = req.body;
+    if (!name && !email) {
+      return res.status(400).json({ success: false, msg: "Nama atau email wajib diisi" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, msg: "User tidak ditemukan" });
+    }
+
+    if (email && email !== user.email) {
+      const existing = await User.findOne({ email });
+      if (existing) {
+        return res.status(400).json({ success: false, msg: "Email sudah digunakan" });
+      }
+      user.email = email;
+    }
+
+    if (name) {
+      user.name = name;
+    }
+
+    if (req.file) {
+      user.profileImage = "/uploads/" + req.file.filename;
+    }
+
+    await user.save();
+
+    res.json({
+      success: true,
+      msg: "Profil berhasil diperbarui",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        profileImage: user.profileImage || null,
         role: user.role,
       },
     });
