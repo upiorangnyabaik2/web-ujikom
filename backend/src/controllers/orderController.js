@@ -1,4 +1,53 @@
-const Order = require("../models/order");
+const Order = require("../models/Order");
+const Menu = require("../models/Menu");
+
+const restoreStock = async (reservedItems) => {
+  if (!Array.isArray(reservedItems)) return;
+  for (const item of reservedItems) {
+    await Menu.updateOne({ _id: item.menuId }, { $inc: { stock: item.qty } });
+  }
+};
+
+const reserveStock = async (items) => {
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    throw new Error("Items tidak boleh kosong");
+  }
+
+  const reserved = [];
+
+  for (const item of items) {
+    const qty = Number(item.qty || 0);
+    if (!item.menuId) {
+      throw new Error("Menu ID tidak valid");
+    }
+    if (isNaN(qty) || qty <= 0) {
+      throw new Error("Kuantitas item tidak valid");
+    }
+
+    const menu = await Menu.findById(item.menuId);
+    if (!menu) {
+      throw new Error(`Menu item tidak ditemukan: ${item.name || item.menuId}`);
+    }
+    const availableStock = typeof menu.stock === "number" ? menu.stock : 0;
+    if (availableStock < qty) {
+      throw new Error(`Stok tidak mencukupi untuk ${menu.name}`);
+    }
+
+    const result = await Menu.updateOne(
+      { _id: item.menuId, stock: { $gte: qty } },
+      { $inc: { stock: -qty } }
+    );
+
+    if (result.modifiedCount === 0) {
+      await restoreStock(reserved);
+      throw new Error(`Stok tidak mencukupi untuk ${menu.name}`);
+    }
+
+    reserved.push({ menuId: item.menuId, qty });
+  }
+
+  return reserved;
+};
 
 // CREATE NEW ORDER
 exports.createOrder = async (req, res) => {
@@ -24,6 +73,8 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ success: false, msg: "Invalid payment method" });
     }
 
+    const reservedStock = await reserveStock(items);
+
     const order = new Order({
       user: req.user._id,
       items,
@@ -37,8 +88,13 @@ exports.createOrder = async (req, res) => {
       notes: notes?.trim() || ""
     });
 
-    await order.save();
-    await order.populate("user", "name email");
+    try {
+      await order.save();
+      await order.populate("user", "name email");
+    } catch (err) {
+      await restoreStock(reservedStock);
+      throw err;
+    }
 
     res.status(201).json({ success: true, msg: "Order created successfully", data: order });
   } catch (err) {

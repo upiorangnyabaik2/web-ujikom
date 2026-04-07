@@ -119,6 +119,8 @@ async function processCheckout() {
         const total = getTotalAmount();
         
         if (paymentMethod === "xendit") {
+            const selectedXenditMethod = document.querySelector('input[name="xenditMethod"]:checked')?.value || null;
+
             // Xendit payment - hit checkout API
             const response = await fetch("/api/checkout/create", {
                 method: "POST",
@@ -136,6 +138,7 @@ async function processCheckout() {
                     })),
                     total: total,
                     paymentMethod: "xendit",
+                    xenditMethod: selectedXenditMethod,
                     recipientName,
                     phone,
                     address,
@@ -159,11 +162,14 @@ async function processCheckout() {
                     })
                 );
 
-                // Langsung ke order-success page menampilkan invoice
-                showAlert("Pesanan berhasil dibuat! Silahkan lakukan pembayaran.", "success");
+                showAlert("Pesanan berhasil dibuat! Mengarahkan ke pembayaran Xendit...", "success");
                 setTimeout(() => {
-                    window.location.href = `/order-success?orderId=${data.orderId}`;
-                }, 1500);
+                    if (data.invoiceUrl) {
+                        window.location.href = data.invoiceUrl;
+                    } else {
+                        window.location.href = `/order-success?orderId=${data.orderId}`;
+                    }
+                }, 1200);
             } else {
                 showAlert(data.message || "Gagal membuat checkout", "error");
             }

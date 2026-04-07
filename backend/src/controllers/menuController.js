@@ -32,7 +32,7 @@ exports.getOne = async (req, res) => {
 // CREATE NEW MENU ITEM
 exports.create = async (req, res) => {
   try {
-    const { name, price, description } = req.body;
+    const { name, price, description, stock } = req.body;
     const image = req.file ? "/uploads/" + req.file.filename : null;
 
     // Validation
@@ -48,9 +48,15 @@ exports.create = async (req, res) => {
       return res.status(400).json({ success: false, msg: "Price must be a positive number" });
     }
 
+    const stockValue = stock !== undefined && stock !== null ? Number(stock) : 0;
+    if (isNaN(stockValue) || stockValue < 0) {
+      return res.status(400).json({ success: false, msg: "Stock must be a non-negative number" });
+    }
+
     const data = await Menu.create({
       name: name.trim(),
       price: parseFloat(price),
+      stock: stockValue,
       description: description?.trim() || "",
       image
     });
@@ -66,7 +72,7 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, price, description } = req.body;
+    const { name, price, description, stock } = req.body;
 
     // Check if menu exists
     const menu = await Menu.findById(id);
@@ -82,6 +88,13 @@ exports.update = async (req, res) => {
         return res.status(400).json({ success: false, msg: "Price must be a positive number" });
       }
       updateData.price = parseFloat(price);
+    }
+    if (stock !== undefined) {
+      const stockValue = Number(stock);
+      if (isNaN(stockValue) || stockValue < 0) {
+        return res.status(400).json({ success: false, msg: "Stock must be a non-negative number" });
+      }
+      updateData.stock = stockValue;
     }
     if (description !== undefined) updateData.description = description.trim();
     if (req.file) updateData.image = "/uploads/" + req.file.filename;

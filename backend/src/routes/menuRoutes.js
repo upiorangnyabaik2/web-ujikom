@@ -1,17 +1,15 @@
-// backend/routes/menuRoutes.js
 const router = require("express").Router();
 const menu = require("../controllers/menuController");
 const multer = require("multer");
-const path = require("path"); 
-const { auth, adminOnly } = require("../middleware/auth");
+const path = require("path");
+const { auth, adminOnly } = require("../middlewares/auth");
 
 // MULTER CONFIG
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads"); 
+    cb(null, path.join(process.cwd(), "uploads"));
   },
   filename: (req, file, cb) => {
-    const ext = file.originalname.split(".").pop();
     cb(null, file.originalname);
   }
 });

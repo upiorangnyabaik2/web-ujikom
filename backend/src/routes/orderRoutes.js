@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { auth, adminOnly } = require("../middleware/auth");
+const { auth, adminOnly } = require("../middlewares/auth");
 const { 
   createOrder, 
   getMyOrders, 

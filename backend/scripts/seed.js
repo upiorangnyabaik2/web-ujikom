@@ -1,7 +1,7 @@
 require("dotenv").config();
-const connectDB = require("./config/db");
-const User = require("./models/User");
-const Menu = require("./models/Menu");
+const connectDB = require("../src/config/db");
+const User = require("../src/models/User");
+const Menu = require("../src/models/Menu");
 const bcrypt = require("bcryptjs");
 
 (async () => {
@@ -22,9 +22,9 @@ const bcrypt = require("bcryptjs");
   const count = await Menu.countDocuments();
   if (count === 0) {
     const sample = [
-      { name: "Nasi Goreng", price: 25000, image: "", description: "Enak pedas." },
-      { name: "Mie Ayam", price: 20000, image: "", description: "Toping ayam." },
-      { name: "Sate Ayam", price: 30000, image: "", description: "Bumbu kacang." }
+      { name: "Nasi Goreng", price: 25000, stock: 10, image: "", description: "Enak pedas." },
+      { name: "Mie Ayam", price: 20000, stock: 12, image: "", description: "Toping ayam." },
+      { name: "Sate Ayam", price: 30000, stock: 8, image: "", description: "Bumbu kacang." }
     ];
     await Menu.insertMany(sample);
     console.log("Sample menu inserted");

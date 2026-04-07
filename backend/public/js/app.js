@@ -182,16 +182,34 @@ document.getElementById("cta-menu-banner")?.addEventListener("click", ()=> showP
 
 /* ========== CART ========== */
 function addToCart(item) {
+  const available = typeof item.stock === "number" ? item.stock : Infinity;
   const found = CART.find(x=> x._id === item._id);
-  if (found) found.qty++;
-  else CART.push({...item, qty:1});
+  if (found) {
+    if (found.qty >= available) {
+      showToast("Stok habis, tidak bisa tambah lagi");
+      return;
+    }
+    found.qty++;
+  } else {
+    if (available <= 0) {
+      showToast("Stok habis");
+      return;
+    }
+    CART.push({...item, qty:1});
+  }
   persist();
 }
 function changeQty(id,delta){
   const idx = CART.findIndex(x=> x._id === id);
   if (idx === -1) return;
-  CART[idx].qty += delta;
-  if (CART[idx].qty <= 0) CART.splice(idx,1);
+  const item = CART[idx];
+  const available = typeof item.stock === "number" ? item.stock : Infinity;
+  if (delta > 0 && item.qty + delta > available) {
+    showToast("Tidak bisa tambah, stok tidak mencukupi");
+    return;
+  }
+  item.qty += delta;
+  if (item.qty <= 0) CART.splice(idx,1);
   persist();
 }
 function updateCartUI(){
@@ -260,6 +278,9 @@ function renderGrid(items){
         <h3 class="menu-title">${item.name}</h3>
         <p class="menu-price">${formatRp(item.price)}</p>
         <p class="menu-desc">${item.description || ""}</p>
+        <p class="menu-stock" style="margin: 8px 0 0 0; font-size: 13px; color: var(--text-light);">
+          ${item.stock !== undefined ? `Stok: ${item.stock}` : "Stok: 0"}
+        </p>
         <div class="action-container" style="display: flex; gap: 8px; margin-top: auto;">
           <button class="primary-btn-add" data-id="${item._id}" style="flex: 1; padding: 10px; background: var(--primary); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.3s ease;">Add</button>
         </div>
@@ -355,6 +376,14 @@ function openDetail(item){
   if (detailName) detailName.innerText = item.name || "";
   if (detailDesc) detailDesc.innerText = item.description || "";
   if (detailPrice) detailPrice.innerText = formatRp(item.price);
+  const stockText = item.stock !== undefined ? item.stock : 0;
+  const stockLabel = stockText > 0 ? `Stok: ${stockText}` : "Stok: Habis";
+  const detailStockEl = document.getElementById("detail-stock");
+  if (detailStockEl) detailStockEl.innerText = stockLabel;
+  if (addDetail) {
+    addDetail.disabled = stockText <= 0;
+    addDetail.innerText = stockText > 0 ? "Tambah ke Keranjang" : "Stok Habis";
+  }
   if (detailModal) detailModal.classList.add("open");
 }
 closeDetail?.addEventListener("click", ()=> detailModal.classList.remove("open"));

@@ -1,5 +1,6 @@
 const axios = require("axios");
-const Order = require("../models/order");
+const Order = require("../models/Order");
+const Menu = require("../models/Menu");
 
 const XENDIT_API_URL = "https://api.xendit.co";
 const XENDIT_SECRET_KEY = process.env.XENDIT_SECRET_KEY;
@@ -13,6 +14,54 @@ const getXenditHeaders = () => {
   };
 };
 
+const restoreStock = async (reservedItems) => {
+  if (!Array.isArray(reservedItems)) return;
+  for (const item of reservedItems) {
+    await Menu.updateOne({ _id: item.menuId }, { $inc: { stock: item.qty } });
+  }
+};
+
+const reserveStock = async (items) => {
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    throw new Error("Items tidak boleh kosong");
+  }
+
+  const reserved = [];
+
+  for (const item of items) {
+    const qty = Number(item.qty || 0);
+    if (!item.menuId) {
+      throw new Error("Menu ID tidak valid");
+    }
+    if (isNaN(qty) || qty <= 0) {
+      throw new Error("Kuantitas item tidak valid");
+    }
+
+    const menu = await Menu.findById(item.menuId);
+    if (!menu) {
+      throw new Error(`Menu item tidak ditemukan: ${item.name || item.menuId}`);
+    }
+    const availableStock = typeof menu.stock === "number" ? menu.stock : 0;
+    if (availableStock < qty) {
+      throw new Error(`Stok tidak mencukupi untuk ${menu.name}`);
+    }
+
+    const result = await Menu.updateOne(
+      { _id: item.menuId, stock: { $gte: qty } },
+      { $inc: { stock: -qty } }
+    );
+
+    if (result.modifiedCount === 0) {
+      await restoreStock(reserved);
+      throw new Error(`Stok tidak mencukupi untuk ${menu.name}`);
+    }
+
+    reserved.push({ menuId: item.menuId, qty });
+  }
+
+  return reserved;
+};
+
 // Mock invoice URL untuk testing tanpa API key
 const generateMockInvoiceUrl = (orderId) => {
   const baseUrl = process.env.CLIENT_URL || "http://localhost:5000";
@@ -22,10 +71,11 @@ const generateMockInvoiceUrl = (orderId) => {
 // Create Checkout
 exports.createCheckout = async (req, res) => {
   try {
-    const { items, total, paymentMethod, recipientName, phone, address, notes } = req.body;
+    const { items, total, paymentMethod, xenditMethod, recipientName, phone, address, notes } = req.body;
     const userId = req.user.id;
 
-    // Create order first
+    const reservedStock = await reserveStock(items);
+
     const order = new Order({
       user: userId,
       items,
@@ -38,7 +88,12 @@ exports.createCheckout = async (req, res) => {
       notes
     });
 
-    await order.save();
+    try {
+      await order.save();
+    } catch (err) {
+      await restoreStock(reservedStock);
+      throw err;
+    }
 
     // If using mock payment (no valid API key), generate mock invoice URL
     if (USE_MOCK_PAYMENT) {
@@ -71,6 +126,7 @@ exports.createCheckout = async (req, res) => {
         quantity: item.qty,
         price: Math.round(item.price),
       })),
+      ...(xenditMethod ? { payment_methods: [xenditMethod] } : {}),
       success_redirect_url: `${process.env.CLIENT_URL || "http://localhost:5000"}/order-success?orderId=${order._id}`,
       failure_redirect_url: `${process.env.CLIENT_URL || "http://localhost:5000"}/order-failed?orderId=${order._id}`,
     };

@@ -12,6 +12,12 @@ const MenuSchema = new mongoose.Schema({
     required: [true, "Price is required"],
     min: [0, "Price cannot be negative"]
   },
+  stock: {
+    type: Number,
+    required: true,
+    default: 0,
+    min: [0, "Stock cannot be negative"]
+  },
   image: { 
     type: String, 
     required: [true, "Image is required"],

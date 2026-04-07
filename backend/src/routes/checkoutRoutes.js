@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const checkoutController = require("../controllers/checkoutController");
-const { auth } = require("../middleware/auth");
+const { auth } = require("../middlewares/auth");
 
 // Create checkout (requires auth)
 router.post("/create", auth, checkoutController.createCheckout);
