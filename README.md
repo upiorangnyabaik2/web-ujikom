@@ -119,7 +119,8 @@ Untuk testing pembayaran secara lokal, gunakan endpoint mock:
 - order history dan order status
 
 ## Akun User & Admin
-- Akun : Admin: admin@local
+- Akun : 
+- Admin: admin@local
             pw: admin123
-         User : smkbpibdg@gmail.com
+- User : smkbpibdg@gmail.com
             pw: bpi123
