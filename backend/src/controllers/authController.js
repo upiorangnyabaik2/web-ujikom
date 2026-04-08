@@ -142,3 +142,12 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ success: false, msg: error.message });
   }
 };
+
+exports.getUsers = async (req, res) => {
+  try {
+    const users = await User.find({}, "name email role createdAt").sort({ createdAt: -1 });
+    res.json({ success: true, users });
+  } catch (error) {
+    res.status(500).json({ success: false, msg: error.message });
+  }
+};

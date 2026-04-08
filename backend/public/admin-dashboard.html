@@ -436,6 +436,33 @@ x<!DOCTYPE html>
             margin-bottom: 30px;
         }
 
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .profile-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+        }
+
+        .profile-card h3 {
+            margin: 0 0 10px;
+            font-size: 18px;
+            color: var(--text-dark);
+        }
+
+        .profile-card p {
+            margin: 8px 0;
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
         .stat-card {
             background: white;
             padding: 20px;
@@ -634,6 +661,12 @@ x<!DOCTYPE html>
             <section id="dashboard-section" class="section active">
                 <div class="admin-section">
                     <h2>Dashboard Overview</h2>
+                    <div class="profile-grid" id="adminProfile">
+                        <div class="profile-card">
+                            <h3>Admin Profile</h3>
+                            <p>Loading admin info...</p>
+                        </div>
+                    </div>
                     <div class="stats-grid" id="statsGrid">
                         <div class="loading">
                             <div class="spinner"></div>
@@ -648,6 +681,16 @@ x<!DOCTYPE html>
                         <div class="loading">
                             <div class="spinner"></div>
                             Loading...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h2>Registered Users</h2>
+                    <div id="usersList" class="table-responsive">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Loading users...
                         </div>
                     </div>
                 </div>
@@ -743,6 +786,7 @@ x<!DOCTYPE html>
 
             // Load dashboard data
             loadDashboard();
+            loadUsers();
         });
 
         function switchTab(tabName, event) {
@@ -766,6 +810,15 @@ x<!DOCTYPE html>
 
         async function loadDashboard() {
             try {
+                const profileHtml = `
+                    <div class="profile-card">
+                        <h3>${user.name || 'Admin'}</h3>
+                        <p><strong>Email:</strong> ${user.email || 'N/A'}</p>
+                        <p><strong>Role:</strong> ${user.role || 'admin'}</p>
+                    </div>
+                `;
+                document.getElementById("adminProfile").innerHTML = profileHtml;
+
                 const response = await fetch("/api/order", {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -773,7 +826,7 @@ x<!DOCTYPE html>
 
                 // Handle response format: data.data or data.orders
                 const orders = data.data || data.orders || [];
-                if (data.success && orders.length > 0) {
+                if (data.success) {
                     const stats = {
                         total: orders.length,
                         pending: orders.filter(o => o.status.toLowerCase() === "pending").length,
@@ -800,7 +853,6 @@ x<!DOCTYPE html>
                         </div>
                     `;
 
-                    // Load recent orders
                     const recent = orders.slice(0, 5);
                     document.getElementById("recentOrders").innerHTML = `
                         <table class="orders-table">
@@ -826,9 +878,53 @@ x<!DOCTYPE html>
                             </tbody>
                         </table>
                     `;
+                } else {
+                    document.getElementById("statsGrid").innerHTML = '<p style="padding: 20px; color: var(--text-light);">Tidak ada data pesanan</p>';
+                    document.getElementById("recentOrders").innerHTML = '<p style="padding: 20px; color: var(--text-light);">Tidak ada pesanan</p>';
                 }
             } catch (error) {
                 console.error("Error loading dashboard:", error);
+                document.getElementById("statsGrid").innerHTML = '<p style="padding: 20px; color: red;">Error memuat statistik</p>';
+                document.getElementById("recentOrders").innerHTML = '<p style="padding: 20px; color: red;">Error memuat pesanan</p>';
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const response = await fetch("/api/auth/users", {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await response.json();
+
+                if (data.success && data.users && data.users.length > 0) {
+                    document.getElementById("usersList").innerHTML = `
+                        <table class="orders-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.users.map(user => `
+                                    <tr>
+                                        <td>${user.name}</td>
+                                        <td>${user.email}</td>
+                                        <td>${user.role}</td>
+                                        <td>${new Date(user.createdAt).toLocaleDateString('id-ID')}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    document.getElementById("usersList").innerHTML = '<p style="padding: 20px; text-align: center; color: var(--text-light);">Tidak ada pengguna terdaftar</p>';
+                }
+            } catch (error) {
+                console.error("Error loading users:", error);
+                document.getElementById("usersList").innerHTML = '<p style="padding: 20px; text-align: center; color: red;">Error memuat pengguna</p>';
             }
         }
 

@@ -1,6 +1,6 @@
 const router = require("express").Router();
-const { register, login, verify, updateProfile } = require("../controllers/authController");
-const { auth } = require("../middlewares/auth");
+const { register, login, verify, updateProfile, getUsers } = require("../controllers/authController");
+const { auth, adminOnly } = require("../middlewares/auth");
 const multer = require("multer");
 const path = require("path");
 
@@ -20,6 +20,7 @@ const upload = multer({ storage });
 router.post("/register", register);
 router.post("/login", login);
 router.post("/verify", auth, verify);
+router.get("/users", auth, adminOnly, getUsers);
 router.put("/profile", auth, upload.single("profileImage"), updateProfile);
 
 module.exports = router;
