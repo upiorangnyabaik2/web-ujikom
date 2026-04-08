@@ -118,3 +118,7 @@ Untuk testing pembayaran secara lokal, gunakan endpoint mock:
 - webhook pembayaran
 - order history dan order status
 
+- Akun : Admin: admin@local
+            pw: admin123
+         User : smkbpibdg@gmail.com
+            pw: bpi123
