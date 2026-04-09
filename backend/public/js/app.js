@@ -62,19 +62,15 @@ function persist() {
   updateCartUI();
 }
 
-// --- UPDATE: FUNGSI TOAST YANG LEBIH CANGGIH ---
+// --- UPDATE: FUNGSI TOAST  ---
 function showToast(msg) {
-  // 1. Coba pakai library Toastr jika ada
   if (window.toastr) {
-     return toastr.success(msg); // Pakai 'success' biar warna hijau
+     return toastr.success(msg); 
   }
-  
-  // 2. Fallback: Buat notifikasi sendiri jika tidak ada library
   let t = document.getElementById("custom-toast-box");
   if (!t) {
     t = document.createElement("div");
     t.id = "custom-toast-box";
-    // Style notifikasi: Hitam, Pojok Kanan Bawah
     t.style.cssText = "position:fixed; bottom:20px; right:20px; background: rgba(0,0,0,0.8); color:white; padding:12px 24px; border-radius:8px; z-index:9999; font-size:14px; font-weight:500; transition: all 0.3s ease; opacity:0; transform: translateY(20px); box-shadow: 0 4px 12px rgba(0,0,0,0.15);";
     document.body.appendChild(t);
   }
